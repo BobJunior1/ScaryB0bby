@@ -1,0 +1,1821 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "B0bbyHub / Forsaken",
+   Icon = 99972211610543, -- Icon in Topbar. Can use Lucide Icons (string) or Roblox Image (number). 0 to use no icon (default).
+   LoadingTitle = "B0bbyhub / Forsaken",
+   LoadingSubtitle = "Loading..",
+   Theme = "AmberGlow", -- Check https://docs.sirius.menu/rayfield/configuration/themes
+
+   DisableRayfieldPrompts = false,
+   DisableBuildWarnings = false, -- Prevents Rayfield from warning when the script has a version mismatch with the interface
+
+   ConfigurationSaving = {
+      Enabled = false,
+      FolderName = nil, -- Create a custom folder for your hub/game
+      FileName = "IgnoreThis"
+   },
+
+   Discord = {
+      Enabled = false, -- Prompt the user to join your Discord server if their executor supports it
+      Invite = "noinvitelink", -- The Discord invite code, do not include discord.gg/. E.g. discord.gg/ ABCD would be ABCD
+      RememberJoins = true -- Set this to false to make them join the discord every time they load it up
+   },
+
+   KeySystem = true, -- Set this to true to use our key system
+   KeySettings = {
+      Title = "Is Bob Cool?",
+      Subtitle = "Yes or no?",
+      Note = "Hint: yes ofc", -- Use this to tell the user how to get a key
+      FileName = "skibdiBobbyKey", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
+      SaveKey = true, -- The user's key will be saved, but if you change the key, they will be unable to use your script
+      GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
+      Key = {"yes","Yes","yes ofc","Yes ofc","Yes Ofc","ofc","Ofc"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
+   }
+})
+
+local function N()
+    local originalFile = "B0bbyHub/NotifySound.mp3"
+    local sound = Instance.new("Sound", game:GetService("Workspace"))
+    sound.SoundId = getsynasset(originalFile)
+    sound:Play()
+end
+
+local function TF()
+local originalFile = "B0bbyHub/ToggleOff.mp3"
+local sound = Instance.new("Sound", game:GetService("Workspace"))
+sound.SoundId = getsynasset(originalFile)
+sound:Play()
+end
+
+local function TN()
+local originalFile = "B0bbyHub/ToggleOn.mp3"
+local sound = Instance.new("Sound", game:GetService("Workspace"))
+sound.SoundId = getsynasset(originalFile)
+sound:Play()
+end
+
+local Tab = Window:CreateTab("Main", 101314838915929) -- Title, Image
+
+local Section = Tab:CreateSection("Esp")
+
+local Button = Tab:CreateButton({
+   Name = "Killer Esp",
+   Callback = function()
+   N()
+   Rayfield:Notify({Title = "Killer esp Activated", Content = "The killer is Now highlighted.", Duration = 3, Image = 4483362458})
+local Players = game.Workspace:WaitForChild("Players")
+local RunService = game:GetService("RunService")
+local function createOutlineESP(model, outlineColor, fillColor)
+    local highlight = model:FindFirstChild("Highlight")
+    if not highlight then
+        highlight = Instance.new("Highlight")
+        highlight.Parent = model
+        highlight.Adornee = model
+    end
+    highlight.FillTransparency = 0.75
+    highlight.FillColor = fillColor
+    highlight.OutlineColor = outlineColor
+    highlight.OutlineTransparency = 0
+end
+local function createBillboardGui(target, text, color)
+    local billboardGui = target:FindFirstChildOfClass("BillboardGui")
+    if not billboardGui then
+        billboardGui = Instance.new("BillboardGui")
+        billboardGui.Adornee = target
+        billboardGui.Size = UDim2.new(0, 100, 0, 25)
+        billboardGui.AlwaysOnTop = true
+        billboardGui.Parent = target.Parent
+        billboardGui.StudsOffset = Vector3.new(0, 2, 0) 
+        local textLabel = Instance.new("TextLabel")
+        textLabel.Size = UDim2.new(1, 0, 1, 0)
+        textLabel.BackgroundTransparency = 1
+        textLabel.TextScaled = true
+        textLabel.TextColor3 = color
+        textLabel.Text = text
+        textLabel.Font = Enum.Font.Antique
+        textLabel.Parent = billboardGui
+    else
+        billboardGui.TextLabel.Text = text
+        billboardGui.TextLabel.TextColor3 = color
+        billboardGui.TextLabel.Font = Enum.Font.Antique
+        billboardGui.StudsOffset = Vector3.new(0, 2, 0)  -- Apply offset even if BillboardGui already exists
+    end
+end
+local function applyHighlighting(model)
+    local humanoid = model:FindFirstChildOfClass("Humanoid")
+    if humanoid and model:FindFirstChild("HumanoidRootPart") then
+        createOutlineESP(model, Color3.fromRGB(128, 0, 0), Color3.fromRGB(64, 0, 0))  -- Dark red colors
+        createBillboardGui(model:FindFirstChild("HumanoidRootPart"), model.Name, Color3.fromRGB(128, 0, 0))  -- Dark red color
+    end
+end
+local function highlightKillers()
+    local killersGroup = Players:FindFirstChild("Killers")
+    if killersGroup then
+        for _, killer in pairs(killersGroup:GetChildren()) do
+            applyHighlighting(killer)
+        end
+    end
+end
+highlightKillers()
+Players.DescendantAdded:Connect(function(descendant)
+    if descendant.Parent and descendant.Parent.Name == "Killers" then
+        applyHighlighting(descendant)
+    end
+end)
+Players.DescendantRemoving:Connect(function(descendant)
+    if descendant:IsA("Model") and descendant.Name == "Killers" then
+        descendant.AncestryChanged:Connect(function(_, parent)
+            if parent then
+                applyHighlighting(descendant)
+            end
+        end)
+    end
+end)
+   end,
+})
+
+local Button = Tab:CreateButton({
+   Name = "Generator esp",
+   Callback = function()
+   N()
+   Rayfield:Notify({Title = "Generator esp Activated", Content = "All Generators are Now highlighted.", Duration = 3, Image = 4483362458})
+   local function createOutline(item)
+    local Highlight = Instance.new('Highlight')
+    Highlight.Parent = item
+    Highlight.Adornee = item
+    Highlight.OutlineColor = Color3.new(1, 1, 1)
+    Highlight.FillColor = Color3.new(0, 0, 0)
+    Highlight.FillTransparency = 0.5
+end
+local function applyESP(item)
+    if item:IsA('Model') and item.Name == 'Generator' then
+        createOutline(item)
+    end
+end
+for _, v in ipairs(game.Workspace:GetDescendants()) do
+    applyESP(v)
+end
+game.Workspace.DescendantAdded:Connect(function(descendant)
+    applyESP(descendant)
+end)
+game.Workspace.DescendantRemoving:Connect(function(descendant)
+    if descendant:IsA('Highlight') then
+        descendant:Destroy()
+    end
+end)
+   end,
+})
+
+local Button = Tab:CreateButton({
+    Name = "Player esp",
+    Callback = function()
+    N()
+    Rayfield:Notify({Title = "Player esp Activated", Content = "All Players are Now highlighted.", Duration = 3, Image = 4483362458})
+local Survivors = workspace.Players.Survivors
+local PlayersService = game:GetService("Players")
+
+local function createESP(model, outlineCol, fillCol)
+    if model and not model:FindFirstChildOfClass("Highlight") then
+        local hl = Instance.new("Highlight")
+        hl.Parent = model
+        hl.Adornee = model
+        hl.FillTransparency = 0.75
+        hl.FillColor = fillCol
+        hl.OutlineColor = outlineCol
+        hl.OutlineTransparency = 0
+    end
+end
+
+local function createOrUpdateHealthUI(character, textCol)
+    local head = character:FindFirstChild("Head")
+    if head then
+        local healthGui = head:FindFirstChild("HealthGui")
+        if not healthGui then
+            healthGui = Instance.new("BillboardGui")
+            healthGui.Name = "HealthGui"
+            healthGui.Size = UDim2.new(0, 100, 0, 60)  -- Increased height to accommodate both labels
+            healthGui.AlwaysOnTop = true
+            healthGui.MaxDistance = math.huge
+            healthGui.Parent = head
+            healthGui.StudsOffset = Vector3.new(0, 3, 0)  -- Adjust the height of each GUI
+
+            local healthLabel = Instance.new("TextLabel")
+            healthLabel.Name = "HealthLabel"
+            healthLabel.Size = UDim2.new(1, 0, 0.5, 0)  -- Adjusted size to fit both labels
+            healthLabel.Position = UDim2.new(0, 0, 0.5, 0)
+            healthLabel.BackgroundTransparency = 1
+            healthLabel.TextScaled = true
+            healthLabel.Text = ""
+            healthLabel.TextColor3 = textCol
+            healthLabel.Font = Enum.Font.Antique
+            healthLabel.Parent = healthGui
+
+            local nameLabel = Instance.new("TextLabel")
+            nameLabel.Name = "NameLabel"
+            nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
+            nameLabel.Position = UDim2.new(0, 0, 0, 0)  -- Positioned above the health label
+            nameLabel.BackgroundTransparency = 1
+            nameLabel.TextScaled = true
+            nameLabel.Text = character.Name
+            nameLabel.TextColor3 = textCol
+            nameLabel.Font = Enum.Font.Antique
+            nameLabel.Parent = healthGui
+        else
+            local healthLabel = healthGui:FindFirstChild("HealthLabel")
+            local nameLabel = healthGui:FindFirstChild("NameLabel")
+            if healthLabel then
+                healthLabel.TextColor3 = textCol
+            end
+            if nameLabel then
+                nameLabel.TextColor3 = textCol
+            end
+        end
+    end
+end
+
+local function updateHealthUI()
+    for _, survivor in ipairs(Survivors:GetChildren()) do
+        local character = survivor
+        if character then
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            local head = character:FindFirstChild("Head")
+            if humanoid and head then
+                local textCol = humanoid.MaxHealth > 500 and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(255, 255, 255)
+                createOrUpdateHealthUI(character, textCol)
+
+                local healthGui = head:FindFirstChild("HealthGui")
+                if healthGui then
+                    local healthLabel = healthGui:FindFirstChild("HealthLabel")
+                    if healthLabel then
+                        healthLabel.Text = math.floor(humanoid.Health) .. "/" .. humanoid.MaxHealth
+                    end
+                end
+            end
+        end
+    end
+end
+
+local function applyESP()
+    for _, survivor in ipairs(Survivors:GetChildren()) do
+        local character = survivor
+        if character then
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                local fillCol = Color3.fromRGB(128, 128, 128)
+                local outlineCol = Color3.fromRGB(255, 255, 255)
+
+                createESP(character, outlineCol, fillCol)
+                createOrUpdateHealthUI(character, outlineCol)
+            end
+        end
+    end
+end
+
+applyESP()
+
+Survivors.ChildAdded:Connect(function(character)
+    wait(1)
+    applyESP()
+end)
+
+Survivors.ChildRemoved:Connect(function(character)
+    local hl = character:FindFirstChildOfClass("Highlight")
+    if hl then
+        hl:Destroy()
+    end
+
+    local head = character:FindFirstChild("Head")
+    if head then
+        local healthGui = head:FindFirstChild("HealthGui")
+        if healthGui then
+            healthGui:Destroy()
+        end
+    end
+end)
+
+while true do
+    applyESP()
+    updateHealthUI()
+    wait(1)
+end
+    end,
+})
+
+local Button = Tab:CreateButton({
+   Name = "Esp Items",
+   Callback = function()
+   N()
+Rayfield:Notify({Title = "Esp Items Activated", Content = "All Items are Now highlighted.", Duration = 3, Image = 4483362458})
+   local Workspace = game:GetService("Workspace")
+
+local function createHighlight(model, outlineColor, fillColor)
+    if model and not model:FindFirstChildOfClass("Highlight") then
+        local highlight = Instance.new("Highlight")
+        highlight.Parent = model
+        highlight.Adornee = model
+        highlight.FillTransparency = 0.75
+        highlight.FillColor = fillColor
+        highlight.OutlineColor = outlineColor
+        highlight.OutlineTransparency = 0
+    end
+end
+
+local function createBillboardGui(target, text, color)
+    if target and not target:FindFirstChildOfClass("BillboardGui") then
+        local billboardGui = Instance.new("BillboardGui")
+        billboardGui.Adornee = target
+        billboardGui.Size = UDim2.new(0, 100, 0, 25)
+        billboardGui.AlwaysOnTop = true
+        billboardGui.Parent = target
+
+        local textLabel = Instance.new("TextLabel")
+        textLabel.Size = UDim2.new(1, 0, 1, 0)
+        textLabel.BackgroundTransparency = 1
+        textLabel.TextScaled = true
+        textLabel.TextColor3 = color
+        textLabel.Text = text
+        textLabel.Font = Enum.Font.Antique  -- Set the font to Antique
+        textLabel.Parent = billboardGui
+    end
+end
+
+local function applyHighlighting(item)
+    local targetPart = item:IsA("Model") and item:FindFirstChildWhichIsA("BasePart")
+    if targetPart then
+        local color
+        if item.Name == "BloxyCola" then
+            color = Color3.fromRGB(204, 153, 0)  -- Dark yellow
+        elseif item.Name == "Medkit" then
+            color = Color3.fromRGB(128, 0, 128)  -- Purple
+        else
+            return  -- Skip other items
+        end
+        createHighlight(targetPart, color, color)
+        createBillboardGui(targetPart, item.Name, color)
+    end
+end
+
+local function highlightItems()
+    for _, item in pairs(Workspace:GetDescendants()) do
+        if item:IsA("Model") and (item.Name == "BloxyCola" or item.Name == "Medkit") then
+            applyHighlighting(item)
+        end
+    end
+end
+
+highlightItems()
+
+Workspace.DescendantAdded:Connect(function(descendant)
+    if descendant:IsA("Model") and (descendant.Name == "BloxyCola" or descendant.Name == "Medkit") then
+        wait(1)  -- Give time for the item to fully load
+        applyHighlighting(descendant)
+    end
+end)
+
+Workspace.DescendantRemoving:Connect(function(descendant)
+    if descendant:IsA("Model") then
+        local highlight = descendant:FindFirstChildOfClass("Highlight")
+        if highlight then
+            highlight:Destroy()
+        end
+
+        local billboardGui = descendant:FindFirstChildOfClass("BillboardGui")
+        if billboardGui then
+            billboardGui:Destroy()
+        end
+    end
+end)
+   end,
+})
+
+local Button = Tab:CreateButton({
+   Name = "1x1x1x1 Zombie esp",
+   Callback = function()
+   N()
+   Rayfield:Notify({Title = "1x1x1x1 Zombie esp Activated", Content = "All 1x4 Zombies are Now highlighted.", Duration = 3, Image = 4483362458})
+   local IngameFolder = workspace.Map.Ingame
+local targetName = "1x1x1x1Zombie"
+local highlightColor = Color3.fromRGB(0, 100, 0)  -- Highlight color (dark green)
+
+local function createHighlight(target)
+    if target and not target:FindFirstChildOfClass("Highlight") then
+        local hl = Instance.new("Highlight")
+        hl.Parent = target
+        hl.Adornee = target
+        hl.FillTransparency = 0.75
+        hl.FillColor = highlightColor
+        hl.OutlineColor = highlightColor
+        hl.OutlineTransparency = 0
+
+        local billboardGui = Instance.new("BillboardGui")
+        billboardGui.Name = "ZombieLabel"
+        billboardGui.Size = UDim2.new(0, 100, 0, 50)
+        billboardGui.AlwaysOnTop = true
+        billboardGui.MaxDistance = math.huge
+        billboardGui.Parent = target
+        billboardGui.StudsOffset = Vector3.new(0, 3, 0)  -- Adjust the height of the GUI
+
+        local textLabel = Instance.new("TextLabel")
+        textLabel.Size = UDim2.new(1, 0, 1, 0)
+        textLabel.BackgroundTransparency = 1
+        textLabel.TextScaled = true
+        textLabel.Text = "1x1x1x1 Zombie"
+        textLabel.TextColor3 = Color3.fromRGB(255, 0, 0)  -- Text color (red)
+        textLabel.Font = Enum.Font.Antique
+        textLabel.Parent = billboardGui
+    end
+end
+
+local function checkAndHighlight()
+    local target = IngameFolder:FindFirstChild(targetName)
+    if target then
+        createHighlight(target)
+    end
+end
+
+checkAndHighlight()
+
+IngameFolder.ChildAdded:Connect(function(child)
+    if child.Name == targetName then
+        createHighlight(child)
+    end
+end)
+   end,
+})
+
+local Button = Tab:CreateButton({
+   Name = "John doe Spike esp",
+   Callback = function()
+   N()
+   Rayfield:Notify({Title = "John doe Spike esp Activated", Content = "All Spikes Are now highlighted.", Duration = 3, Image = 4483362458})
+local IngameFolder = workspace.Map.Ingame
+local targetName = "Spike"
+local highlightColor = Color3.fromRGB(255, 140, 0)  -- Dark orange color
+
+local function createHighlight(target)
+    if target and not target:FindFirstChildOfClass("Highlight") then
+        local hl = Instance.new("Highlight")
+        hl.Parent = target
+        hl.Adornee = target
+        hl.FillTransparency = 0.75
+        hl.FillColor = highlightColor
+        hl.OutlineColor = highlightColor
+        hl.OutlineTransparency = 0
+    end
+end
+
+local function checkAndHighlight()
+    local target = IngameFolder:FindFirstChild(targetName)
+    if target then
+        createHighlight(target)
+    end
+end
+
+checkAndHighlight()
+
+IngameFolder.ChildAdded:Connect(function(child)
+    if child.Name == targetName then
+        createHighlight(child)
+    end
+end)
+   end,
+})
+
+local Button = Tab:CreateButton({
+   Name = "Pizza Delivery Minion esp",
+   Callback = function()
+N()
+   Rayfield:Notify({Title = "Pizza Delivery Minion esp Activated", Content = "All Pizza Delivery Minions are Now highlighted.", Duration = 3, Image = 4483362458})
+local IngameFolder = workspace.Map.Ingame
+local targetName = "PizzaDeliveryRig"
+local highlightColor = Color3.fromRGB(139, 0, 0)  -- Dark red color
+
+local function createHighlight(target)
+    if target and not target:FindFirstChildOfClass("Highlight") then
+        local hl = Instance.new("Highlight")
+        hl.Parent = target
+        hl.Adornee = target
+        hl.FillTransparency = 0.75
+        hl.FillColor = highlightColor
+        hl.OutlineColor = highlightColor
+        hl.OutlineTransparency = 0
+
+        local billboardGui = Instance.new("BillboardGui")
+        billboardGui.Name = "PizzaDeliveryMinionEsp"
+        billboardGui.Size = UDim2.new(0, 100, 0, 50)
+        billboardGui.AlwaysOnTop = true
+        billboardGui.MaxDistance = math.huge
+        billboardGui.Parent = target
+        billboardGui.StudsOffset = Vector3.new(0, 3, 0)  -- Adjust the height of the GUI
+
+        local textLabel = Instance.new("TextLabel")
+        textLabel.Size = UDim2.new(1, 0, 1, 0)
+        textLabel.BackgroundTransparency = 1
+        textLabel.TextScaled = true
+        textLabel.Text = "Pizza Delivery Minion"
+        textLabel.TextColor3 = Color3.fromRGB(139, 0, 0)  -- Dark red color
+        textLabel.Font = Enum.Font.Antique
+        textLabel.Parent = billboardGui
+    end
+end
+
+local function checkAndHighlight()
+    local target = IngameFolder:FindFirstChild(targetName)
+    if target then
+        createHighlight(target)
+    end
+end
+
+checkAndHighlight()
+
+IngameFolder.ChildAdded:Connect(function(child)
+    if child.Name == targetName then
+        createHighlight(child)
+    end
+end)
+   end,
+})
+
+local Button = Tab:CreateButton({
+   Name = "Elliot's Pizza esp",
+   Callback = function()
+   N()
+   Rayfield:Notify({Title = "Elliot's Pizza esp Activated", Content = "All pizzas are Now highlighted.", Duration = 3, Image = 4483362458})
+   local IngameFolder = workspace.Map.Ingame
+local targetName = "Pizza"
+local highlightColor = Color3.fromRGB(255, 165, 0)  -- Orange color
+
+local function createHighlight(target)
+    if target and not target:FindFirstChildOfClass("Highlight") then
+        local hl = Instance.new("Highlight")
+        hl.Parent = target
+        hl.Adornee = target
+        hl.FillTransparency = 0.75
+        hl.FillColor = highlightColor
+        hl.OutlineColor = highlightColor
+        hl.OutlineTransparency = 0
+
+        local billboardGui = Instance.new("BillboardGui")
+        billboardGui.Name = "PizzaLabel"
+        billboardGui.Size = UDim2.new(0, 100, 0, 50)
+        billboardGui.AlwaysOnTop = true
+        billboardGui.MaxDistance = math.huge
+        billboardGui.Parent = target
+        billboardGui.StudsOffset = Vector3.new(0, 3, 0)  -- Adjust the height of the GUI
+
+        local textLabel = Instance.new("TextLabel")
+        textLabel.Size = UDim2.new(1, 0, 1, 0)
+        textLabel.BackgroundTransparency = 1
+        textLabel.TextScaled = true
+        textLabel.Text = "Pizza"
+        textLabel.TextColor3 = Color3.fromRGB(255, 140, 0)  -- Dark orange color
+        textLabel.Font = Enum.Font.Antique
+        textLabel.Parent = billboardGui
+    end
+end
+
+local function checkAndHighlight()
+    local target = IngameFolder:FindFirstChild(targetName)
+    if target then
+        createHighlight(target)
+    end
+end
+
+checkAndHighlight()
+
+IngameFolder.ChildAdded:Connect(function(child)
+    if child.Name == targetName then
+        createHighlight(child)
+    end
+end)
+   end,
+})
+
+local Button = Tab:CreateButton({
+    Name = "Builderman Sentry/Dispenser esp",
+    Callback = function()
+    N()
+    local originalFile = "B0bbyHub/NotifySound.mp3"
+local sound = Instance.new("Sound", game:GetService("Workspace"))
+sound.SoundId = getsynasset(originalFile)
+sound:Play()
+    Rayfield:Notify({Title = "Builderman Sentry/Dispenser esp Activated", Content = "All Sentry's/Dispenser's are Now highlighted.", Duration = 3, Image = 4483362458})
+        local IngameFolder = workspace.Map.Ingame
+        local sentryTargets = {"BuildermanSentryEffectRange", "BuildermanSentry"}
+        local dispenserTargets = {"BuildermanDispenserEffectRange", "BuildermanDispenser"}
+        local highlightColorSentry = Color3.fromRGB(0, 0, 255)  -- Blue color for BuildermanSentry
+        local highlightColorEffectRange = Color3.fromRGB(255, 0, 0)  -- Red color for BuildermanSentryEffectRange
+        local highlightColorDispenser = Color3.fromRGB(0, 255, 0)  -- Green color for BuildermanDispenser
+
+        local function createHighlight(target, color, label)
+            if target and not target:FindFirstChildOfClass("Highlight") then
+                local hl = Instance.new("Highlight")
+                hl.Parent = target
+                hl.Adornee = target
+                hl.FillTransparency = 0.75
+                hl.FillColor = color
+                hl.OutlineColor = color
+                hl.OutlineTransparency = 0
+
+                local billboardGui = Instance.new("BillboardGui")
+                billboardGui.Name = label .. "Label"
+                billboardGui.Size = UDim2.new(0, 100, 0, 50)
+                billboardGui.AlwaysOnTop = true
+                billboardGui.MaxDistance = math.huge
+                billboardGui.Parent = target
+                billboardGui.StudsOffset = Vector3.new(0, 3, 0)  -- Adjust the height of the GUI
+
+                local textLabel = Instance.new("TextLabel")
+                textLabel.Size = UDim2.new(1, 0, 1, 0)
+                textLabel.BackgroundTransparency = 1
+                textLabel.TextScaled = true
+                textLabel.Text = label
+                textLabel.TextColor3 = color
+                textLabel.Font = Enum.Font.Antique
+                textLabel.Parent = billboardGui
+            end
+        end
+
+        local function checkAndHighlight(targetNames, color, label)
+            for _, targetName in ipairs(targetNames) do
+                local target = IngameFolder:FindFirstChild(targetName)
+                if target then
+                    createHighlight(target, color, label)
+                end
+            end
+        end
+
+        checkAndHighlight(sentryTargets, highlightColorSentry, "Sentry")
+        checkAndHighlight(dispenserTargets, highlightColorDispenser, "Dispenser")
+
+        IngameFolder.ChildAdded:Connect(function(child)
+            if child.Name == "BuildermanSentry" or child.Name == "BuildermanSentryEffectRange" then
+                createHighlight(child, highlightColorSentry, "Sentry")
+            elseif child.Name == "BuildermanDispenser" or child.Name == "BuildermanDispenserEffectRange" then
+                createHighlight(child, highlightColorDispenser, "Dispenser")
+            end
+        end)
+    end,
+})
+
+local Section = Tab:CreateSection("other")
+
+local Button = Tab:CreateButton({
+   Name = "Fullbright",
+   Callback = function()
+   N()
+Rayfield:Notify({Title = "Fullbright Activated", Content = "Everything is Now Pretty Visible.", Duration = 3, Image = 4483362458})
+game:GetService("Lighting").Brightness = 0.8
+game:GetService("Lighting").Ambient = Color3.new(0.75, 0.75, 0.75)
+game:GetService("Lighting").OutdoorAmbient = Color3.new(0.75, 0.75, 0.75)
+game:GetService("Lighting").GlobalShadows = false
+game:GetService("Lighting").FogEnd = 100000
+   end,
+})
+
+local Button = Tab:CreateButton({
+    Name = "Remove Slowness effect",
+    Callback = function()
+    N()
+    local slowness = game:GetService("ReplicatedStorage").Modules.StatusEffects:FindFirstChild("Slowness")
+if slowness then
+Rayfield:Notify({Title = "Slowness Effect Removed", Content = "Self Expalaitory, Will Stop Entanglement From Freezing you", Duration = 3, Image = 4483362458})
+    slowness:Destroy()
+else
+    Rayfield:Notify({Title = "Slowness effect Already Removed", Content = "Slowness effect Already Removed, No need to do it again.", Duration = 3, Image = 4483362458})
+end
+    end,
+})
+
+local Button = Tab:CreateButton({
+   Name = "Remove Blindness effect",
+   Callback = function()
+   N()
+   local blindness = game:GetService("ReplicatedStorage").Modules.StatusEffects:FindFirstChild("Blindness")
+if blindness then
+    blindness:Destroy()
+    Rayfield:Notify({Title = "Blindness effect Removed", Content = "Self expalaitory.", Duration = 3, Image = 4483362458})
+else
+    Rayfield:Notify({Title = "Blindness effect Already Removed", Content = "Blindness effect is Already removed, No need to do it again.", Duration = 3, Image = 4483362458})
+end
+   end,
+})
+
+local Toggle = Tab:CreateToggle({
+	Name = "Auto 1x1x1x1 Popup",
+	CurrentValue = false,
+	Flag = "Toggle1x1Popupboi", -- Ensure every element has a different flag if you're using configuration saving to avoid overlaps
+	Callback = function(Value)
+		local VIM = game:GetService("VirtualInputManager")
+		local running = true
+		
+		local function runScript()
+			while running do
+				local player = game:GetService("Players").LocalPlayer
+				local popups = player.PlayerGui.TemporaryUI:GetChildren()
+
+				for _, i in ipairs(popups) do
+					if i.Name == "1x1x1x1Popup" then
+						local centerX = i.AbsolutePosition.X + (i.AbsoluteSize.X / 2)
+						local centerY = i.AbsolutePosition.Y + (i.AbsoluteSize.Y / 2) + 50
+						VIM:SendMouseButtonEvent(
+							centerX,
+							centerY,
+							Enum.UserInputType.MouseButton1.Value,
+							true,
+							player.PlayerGui,
+							1
+						)
+						VIM:SendMouseButtonEvent(
+							centerX,
+							centerY,
+							Enum.UserInputType.MouseButton1.Value,
+							false,
+							player.PlayerGui,
+							1
+						)
+					end 
+				end
+				task.wait(0.1)
+			end
+		end
+		
+		if Value then
+			running = true
+			spawn(runScript)
+			TN()
+		else
+			running = false
+			TF()
+		end
+	end,
+})
+
+local Toggle = Tab:CreateToggle({
+   Name = "Infinite Stamina (Might Not work Perfectly when killer)",
+   CurrentValue = false,
+   Flag = "Toggleinfinitestamina",
+   Callback = function(Value)
+        stam = Value
+        local stamscript = require(game.ReplicatedStorage.Systems.Character.Game.Sprinting)
+        
+        if stam then
+        TN()
+        else
+        TF()
+        end
+        
+        local connection
+        connection = game:GetService("RunService").Heartbeat:Connect(function()
+            if not stam then
+                connection:Disconnect()
+                stamscript.StaminaLossDisabled = nil
+                return
+            end
+            stamscript.StaminaLossDisabled = function() 
+            end
+        end)
+   end,
+})
+
+local pizzaEnabled = false
+
+local Toggle = Tab:CreateToggle({
+    Name = "Auto Tp to Pizza",
+    CurrentValue = false,
+    Flag = "PizzaTeleportToggle",
+    Callback = function(Value)
+        pizzaEnabled = Value
+
+        if pizzaEnabled then
+            TN()
+        else
+            TF()
+        end
+
+        local PlayersService = game:GetService("Players")
+        local localPlayer = PlayersService.LocalPlayer
+        local IngameFolder = workspace.Map.Ingame
+        local targetName = "Pizza"
+        local teleportDuration = 0.5
+        local waitBeforeTeleport = 1
+
+        local function teleportToTarget(target)
+            if not target then
+                return
+            end
+            
+            local character = localPlayer.Character
+            if not character then
+                return
+            end
+
+            local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+            if not humanoidRootPart then
+                return
+            end
+
+            local previousPosition = humanoidRootPart.Position
+
+            wait(waitBeforeTeleport)
+
+            if target and target:IsDescendantOf(IngameFolder) then
+                humanoidRootPart.CFrame = target.CFrame
+            end
+
+            wait(teleportDuration)
+
+            humanoidRootPart.CFrame = CFrame.new(previousPosition)
+        end
+
+        local function checkAndTeleport()
+            while pizzaEnabled do
+                local target = IngameFolder:FindFirstChild(targetName)
+                if target then
+                    teleportToTarget(target)
+                end
+                wait(1)
+            end
+        end
+        
+        if pizzaEnabled then
+            checkAndTeleport()
+        end
+
+        IngameFolder.ChildAdded:Connect(function(child)
+            if child.Name == targetName and pizzaEnabled then
+                checkAndTeleport()
+            end
+        end)
+    end,
+})
+
+local Tab = Window:CreateTab("Generators", 82564898490927)
+
+local Button = Tab:CreateButton({
+   Name = "Delayed Auto fix generator (10 Second Delay)",
+   Callback = function()
+   N()
+Rayfield:Notify({Title = "Delayed Auto-fix generator Activated", Content = "You will need to Re-execute it Every round.", Duration = 3, Image = 4483362458})
+   while true do
+for i, v in pairs(game.Workspace.Map.Ingame.Map:GetChildren()) do
+    if v.Name == "Generator" then
+        v:WaitForChild("Remotes"):WaitForChild("RE"):FireServer()
+    end
+end
+wait(10)
+end
+   end,
+})
+
+local Button = Tab:CreateButton({
+   Name = "Delayed Auto fix generator (5 Second Delay)",
+   Callback = function()
+   N()
+Rayfield:Notify({Title = "Delayed Auto-fix generator Activated", Content = "You will need to Re-execute it Every round.", Duration = 3, Image = 4483362458})
+   while true do
+for i, v in pairs(game.Workspace.Map.Ingame.Map:GetChildren()) do
+    if v.Name == "Generator" then
+        v:WaitForChild("Remotes"):WaitForChild("RE"):FireServer()
+    end
+end
+wait(5)
+end
+   end,
+})
+
+local Button = Tab:CreateButton({
+   Name = "instant fix Quarter of the generator",
+   Callback = function()
+   N()
+   for i, v in pairs(game.Workspace.Map.Ingame.Map:GetChildren()) do
+    if v.Name == "Generator" then
+        v:WaitForChild("Remotes"):WaitForChild("RE"):FireServer()
+    end
+end
+   end,
+})
+
+local Input = Tab:CreateInput({
+    Name = "Custom Generator Delay time",
+    CurrentValue = "",
+    PlaceholderText = "Insert Delay Time(Seconds)",
+    RemoveTextAfterFocusLost = false,
+    Flag = "InputGeneratorCustom",
+    Callback = function(Text)
+        N() 
+        Rayfield:Notify({Title = "Custom Delay Set", Content = "Custom Delay Time set to " .. Text, Duration = 3, Image = 4483362458})
+        while true do
+            for i, v in pairs(game.Workspace.Map.Ingame.Map:GetChildren()) do
+                if v.Name == "Generator" then
+                    v:WaitForChild("Remotes"):WaitForChild("RE"):FireServer()
+                end
+            end
+            wait(Text)
+        end
+    end,
+})
+
+local Tab = Window:CreateTab("Aimbot", 121171162573412)
+
+local Button = Tab:CreateButton({
+   Name = "Aimbot Mass-infection",
+   Callback = function()
+   N()
+   Rayfield:Notify({Title = "Aimbot Mass-infection Activated", Content = "Use 1x1x1x1 For this to Function correctly.", Duration = 3, Image = 4483362458})
+   local player = game.Players.LocalPlayer
+local mouse = player:GetMouse()
+local camlockEnabled = false
+local targetPlayer = nil
+
+function getClosestPlayer()
+    local closestPlayer = nil
+    local shortestDistance = math.huge
+    local playerPosition = player.Character and player.Character:FindFirstChild("HumanoidRootPart").Position
+
+    if playerPosition then
+        for _, otherPlayer in ipairs(game:GetService("Players"):GetPlayers()) do
+            if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local otherPlayerPosition = otherPlayer.Character.HumanoidRootPart.Position
+                local distance = (otherPlayerPosition - playerPosition).Magnitude
+                if distance < shortestDistance then
+                    closestPlayer = otherPlayer
+                    shortestDistance = distance
+                end
+            end
+        end
+    end
+    return closestPlayer
+end
+
+function enableCamlockForDuration()
+    targetPlayer = getClosestPlayer()
+    if targetPlayer then
+        camlockEnabled = true
+        delay(2, function()
+            camlockEnabled = false
+            targetPlayer = nil
+        end)
+    end
+end
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    if camlockEnabled and targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, targetPlayer.Character.HumanoidRootPart.Position)
+    end
+end)
+
+local playerGui = player:WaitForChild("PlayerGui")
+local mainUI = playerGui:WaitForChild("MainUI")
+local abilityContainer = mainUI:WaitForChild("AbilityContainer")
+local massInfectionButton = abilityContainer:WaitForChild("MassInfection")
+
+local function onMassInfectionButtonPressed()
+    enableCamlockForDuration()
+end
+
+massInfectionButton.Activated:Connect(onMassInfectionButtonPressed)
+   end,
+})
+
+local Button = Tab:CreateButton({
+   Name = "Aimbot Entanglement",
+   Callback = function()
+   N()
+Rayfield:Notify({Title = "Aimbot Entanglement Activated", Content = "Use 1x1x1x1 For this to Function correctly.", Duration = 3, Image = 4483362458})
+   local player = game.Players.LocalPlayer
+local mouse = player:GetMouse()
+local camlockEnabled = false
+local targetPlayer = nil
+
+function getClosestPlayer()
+    local closestPlayer = nil
+    local shortestDistance = math.huge
+    local playerPosition = player.Character and player.Character:FindFirstChild("HumanoidRootPart").Position
+
+    if playerPosition then
+        for _, otherPlayer in ipairs(game:GetService("Players"):GetPlayers()) do
+            if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local otherPlayerPosition = otherPlayer.Character.HumanoidRootPart.Position
+                local distance = (otherPlayerPosition - playerPosition).Magnitude
+                if distance < shortestDistance then
+                    closestPlayer = otherPlayer
+                    shortestDistance = distance
+                end
+            end
+        end
+    end
+    return closestPlayer
+end
+
+function enableCamlockForDuration()
+    targetPlayer = getClosestPlayer()
+    if targetPlayer then
+        camlockEnabled = true
+        delay(2, function()
+            camlockEnabled = false
+            targetPlayer = nil
+        end)
+    end
+end
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    if camlockEnabled and targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, targetPlayer.Character.HumanoidRootPart.Position)
+    end
+end)
+
+local playerGui = player:WaitForChild("PlayerGui")
+local mainUI = playerGui:WaitForChild("MainUI")
+local abilityContainer = mainUI:WaitForChild("AbilityContainer")
+local entanglementButton = abilityContainer:WaitForChild("Entanglement")
+
+local function onEntanglementButtonPressed()
+    enableCamlockForDuration()
+end
+
+entanglementButton.Activated:Connect(onEntanglementButtonPressed)
+   end,
+})
+
+local Button = Tab:CreateButton({
+   Name = "Dusekkar Aimbot (switchable)",
+   Callback = function()
+   N()
+Rayfield:Notify({Title = "Dusekkar Aimbot Activated", Content = "Use Dusekkar for this to work, The gui will not function correctly if In-lobby.", Duration = 3, Image = 4483362458})
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+local toggleButton = Instance.new("TextButton")
+toggleButton.Parent = screenGui
+toggleButton.Size = UDim2.new(0, 200, 0, 50)  -- Width: 200 pixels, Height: 50 pixels
+toggleButton.Position = UDim2.new(0.5, 150, 0.5, -200)  -- Centered on the screen
+toggleButton.Text = "Choose Target"
+toggleButton.BackgroundColor3 = Color3.fromRGB(30, 144, 255)  -- Initial color: Dodger Blue
+toggleButton.TextColor3 = Color3.new(1, 1, 1)  -- White text
+toggleButton.Font = Enum.Font.SourceSansBold
+toggleButton.TextSize = 24
+local sayHello = true
+local survivorCamlockEnabled = false
+local killerCamlockEnabled = false
+local survivorConnection
+local killerConnection
+toggleButton.MouseButton1Click:Connect(function()
+    local player = game.Players.LocalPlayer
+    local mouse = player:GetMouse()
+    if survivorConnection then
+        survivorConnection:Disconnect()
+        survivorCamlockEnabled = false
+    end
+    if killerConnection then
+        killerConnection:Disconnect()
+        killerCamlockEnabled = false
+    end
+    if sayHello then
+        local targetPlayer = nil
+        function getClosestPlayer()
+            local closestPlayer = nil
+            local closestDistance = math.huge
+            local camera = workspace.CurrentCamera
+            for _, v in pairs(game.Players:GetPlayers()) do
+                if v ~= player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+                    local screenPosition, onScreen = camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
+                    if onScreen then
+                        local distance = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(screenPosition.X, screenPosition.Y)).magnitude
+                        if distance < closestDistance then
+                            closestDistance = distance
+                            closestPlayer = v
+                        end
+                    end
+                end
+            end
+            return closestPlayer
+        end
+        function enableSurvivorCamlockForDuration()
+            targetPlayer = getClosestPlayer()
+            if targetPlayer then
+                survivorCamlockEnabled = true
+                delay(2, function()
+                    survivorCamlockEnabled = false
+                    targetPlayer = nil
+                end)
+            end
+        end
+        survivorConnection = game:GetService("RunService").RenderStepped:Connect(function()
+            if survivorCamlockEnabled and targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, targetPlayer.Character.HumanoidRootPart.Position)
+            end
+        end)
+        local playerGui = player:WaitForChild("PlayerGui")
+        local mainUI = playerGui:WaitForChild("MainUI")
+        local abilityContainer = mainUI:WaitForChild("AbilityContainer")
+        local plasmaBeamButton = abilityContainer:WaitForChild("PlasmaBeam")
+        local function onPlasmaBeamButtonPressed()
+            enableSurvivorCamlockForDuration()
+        end
+        plasmaBeamButton.Activated:Connect(onPlasmaBeamButtonPressed)
+        toggleButton.Text = "Target: Survivors"
+        toggleButton.BackgroundColor3 = Color3.fromRGB(34, 139, 34)  -- Green color for Survivors
+    else
+        local targetObject = nil
+        function getTargetObject()
+            local killersFolder = workspace:WaitForChild("Players"):WaitForChild("Killers")
+            local closestObject = nil
+            local closestDistance = math.huge
+            for _, v in pairs(killersFolder:GetChildren()) do
+                if v:IsA("Model") and v:FindFirstChild("HumanoidRootPart") then
+                    local screenPosition = workspace.CurrentCamera:WorldToScreenPoint(v.HumanoidRootPart.Position)
+                    local distance = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(screenPosition.X, screenPosition.Y)).magnitude
+                    if distance < closestDistance then
+                        closestDistance = distance
+                        closestObject = v
+                    end
+                end
+            end
+            return closestObject
+        end
+        function enableKillerCamlockForDuration()
+            targetObject = getTargetObject()
+            if targetObject then
+                killerCamlockEnabled = true
+                delay(2, function()
+                    killerCamlockEnabled = false
+                    targetObject = nil
+                end)
+            end
+        end
+        killerConnection = game:GetService("RunService").RenderStepped:Connect(function()
+            if killerCamlockEnabled and targetObject and targetObject:FindFirstChild("HumanoidRootPart") then
+                workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, targetObject.HumanoidRootPart.Position)
+            end
+        end)
+        local playerGui = player:WaitForChild("PlayerGui")
+        local mainUI = playerGui:WaitForChild("MainUI")
+        local abilityContainer = mainUI:WaitForChild("AbilityContainer")
+        local plasmaBeamButton = abilityContainer:WaitForChild("PlasmaBeam")
+        local function onPlasmaBeamButtonPressed()
+            enableKillerCamlockForDuration()
+        end
+        plasmaBeamButton.Activated:Connect(onPlasmaBeamButtonPressed)
+        toggleButton.Text = "Target: Killer"
+        toggleButton.BackgroundColor3 = Color3.fromRGB(220, 0, 0)  -- Crimson color for Killer
+    end
+    sayHello = not sayHello  -- Toggle the state
+end)
+   end,
+})
+
+local Button = Tab:CreateButton({
+    Name = "Chance Aimbot (Use Shiftlock/First Person)",
+    Callback = function()
+   N()
+        Rayfield:Notify({Title = "Chance Aimbot Activated", Content = "Use chance for This to work.", Duration = 3, Image = 4483362458})
+        local player = game.Players.LocalPlayer
+        local mouse = player:GetMouse()
+        local camlockEnabled = false
+        local targetObject = nil
+        function getTargetObject()
+            local killersFolder = workspace:WaitForChild("Players"):WaitForChild("Killers")
+            local closestObject = nil
+            local closestDistance = math.huge
+            for _, v in pairs(killersFolder:GetChildren()) do
+                if v:IsA("Model") and v:FindFirstChild("HumanoidRootPart") then
+                    local screenPosition = workspace.CurrentCamera:WorldToScreenPoint(v.HumanoidRootPart.Position)
+                    local distance = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(screenPosition.X, screenPosition.Y)).magnitude
+                    if distance < closestDistance then
+                        closestDistance = distance
+                        closestObject = v
+                    end
+                end
+            end
+            return closestObject
+        end
+
+        function enableCamlockForDuration()
+            targetObject = getTargetObject()
+            if targetObject then
+                camlockEnabled = true
+                delay(2, function()
+                    camlockEnabled = false
+                    targetObject = nil
+                end)
+            end
+        end
+
+        game:GetService("RunService").RenderStepped:Connect(function()
+            if camlockEnabled and targetObject and targetObject:FindFirstChild("HumanoidRootPart") then
+                workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, targetObject.HumanoidRootPart.Position)
+            end
+        end)
+
+        local playerGui = player:WaitForChild("PlayerGui")
+        local mainUI = playerGui:WaitForChild("MainUI")
+        local abilityContainer = mainUI:WaitForChild("AbilityContainer")
+        local shootButton = abilityContainer:WaitForChild("Shoot")
+
+        local function onShootButtonPressed()
+            enableCamlockForDuration()
+        end
+
+        shootButton.Activated:Connect(onShootButtonPressed)
+    end
+})
+
+local Tab = Window:CreateTab("Fun", 93148064456016)
+
+local Button = Tab:CreateButton({
+   Name = "Fake Punch Button",
+   Callback = function()
+   N()
+   Rayfield:Notify({Title = "Fake Punch Button", Content = "Scare em away", Duration = 3, Image = 4483362458})
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+local screenGui = playerGui:FindFirstChild("ScreenGui")
+
+if not screenGui then
+    screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "ScreenGui"
+    screenGui.Parent = playerGui
+end
+
+local imageButton = Instance.new("ImageButton")
+imageButton.Size = UDim2.new(0, 100, 0, 100) -- Adjust the size as needed
+imageButton.Position = UDim2.new(0.5, -50, 0.5, -50) -- Centered on the screen
+imageButton.Image = "rbxassetid://110895402653848" -- Replace with your image asset ID
+imageButton.BackgroundTransparency = 1 -- Make the background fully transparent
+imageButton.Parent = screenGui
+
+local animation = Instance.new("Animation")
+animation.AnimationId = "rbxassetid://87259391926321"
+
+local character = player.Character or player.CharacterAdded:Wait()
+
+local function playAnimation()
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        local animationTrack = humanoid:LoadAnimation(animation)
+        animationTrack:Play()
+    else
+        warn("Skibdi")
+    end
+end
+
+imageButton.MouseButton1Click:Connect(playAnimation)
+
+local UserInputService = game:GetService("UserInputService")
+
+local dragging
+local dragInput
+local dragStart
+local startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    imageButton.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+imageButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = imageButton.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+imageButton.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
+   end,
+})
+
+local Button = Tab:CreateButton({
+   Name = "Fake block button",
+   Callback = function()
+   N()
+   Rayfield:Notify({Title = "Fake Block Button Activated", Content = "Scare em Away", Duration = 3, Image = 4483362458})
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+local screenGui = playerGui:FindFirstChild("ScreenGui")
+
+if not screenGui then
+    screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "ScreenGui"
+    screenGui.Parent = playerGui
+end
+
+local imageButton = Instance.new("ImageButton")
+imageButton.Size = UDim2.new(0, 100, 0, 100) -- Adjust the size as needed
+imageButton.Position = UDim2.new(0.5, -50, 0.5, -50) -- Centered on the screen
+imageButton.Image = "rbxassetid://85125497005042" -- Replace with your image asset ID
+imageButton.BackgroundTransparency = 1 -- Make the background fully transparent
+imageButton.Parent = screenGui
+
+local animation = Instance.new("Animation")
+animation.AnimationId = "rbxassetid://72722244508749"
+
+local character = player.Character or player.CharacterAdded:Wait()
+
+local function playAnimation()
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        local animationTrack = humanoid:LoadAnimation(animation)
+        animationTrack:Play()
+    else
+        warn("Skibdi")
+    end
+end
+
+imageButton.MouseButton1Click:Connect(playAnimation)
+
+local UserInputService = game:GetService("UserInputService")
+
+local dragging
+local dragInput
+local dragStart
+local startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    imageButton.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+imageButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = imageButton.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+imageButton.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
+   end,
+})
+
+local Section = Tab:CreateSection("flip")
+
+local Button = Tab:CreateButton({
+   Name = "Backflip Button",
+   Callback = function()
+   N()
+   Rayfield:Notify({Title = "Backflip Button Activated", Content = "Show em your Flipping skills🤑", Duration = 3, Image = 4483362458})
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+local screenGui = playerGui:FindFirstChild("ScreenGui")
+
+if not screenGui then
+    screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "ScreenGui"
+    screenGui.Parent = playerGui
+end
+
+local imageButton = Instance.new("ImageButton")
+imageButton.Size = UDim2.new(0, 100, 0, 100) 
+imageButton.Position = UDim2.new(0.5, -50, 0.5, -50)
+imageButton.Image = "rbxassetid://108983136200755" -- Replace with your image asset ID
+imageButton.BackgroundTransparency = 1
+imageButton.Parent = screenGui
+
+imageButton.MouseButton1Click:Connect(function()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    local humanoid = character:WaitForChild("Humanoid")
+
+    humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, false)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.Running, false)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
+
+    local function performBackflip()
+        local duration = 0.45
+        local steps = 120
+        local startCFrame = humanoidRootPart.CFrame
+        local backwardVector = -startCFrame.LookVector
+        local upVector = Vector3.new(0, 1, 0)
+
+        task.spawn(function()
+            local startTime = tick()
+            for i = 1, steps do
+                local t = i / steps
+                local height = 4 * (t - t ^ 2) * 10
+                local nextPos = startCFrame.Position + backwardVector * (35 * t) + upVector * height
+                local rotation = startCFrame.Rotation * CFrame.Angles(-math.rad(i * (360 / steps)), 0, 0)
+
+                humanoidRootPart.CFrame = CFrame.new(nextPos) * rotation
+                local elapsedTime = tick() - startTime
+                local expectedTime = (duration / steps) * i
+                local waitTime = expectedTime - elapsedTime
+                if waitTime > 0 then
+                    task.wait(waitTime)
+                end
+            end
+
+            humanoidRootPart.CFrame = CFrame.new(startCFrame.Position + backwardVector * 35) * startCFrame.Rotation
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, true)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Running, true)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
+            humanoid:ChangeState(Enum.HumanoidStateType.Running)
+        end)
+    end
+
+    performBackflip()
+end)
+
+local UserInputService = game:GetService("UserInputService")
+
+local dragging, dragInput, dragStart, startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    imageButton.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+imageButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = imageButton.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+imageButton.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
+   end,
+})
+
+local Button = Tab:CreateButton({
+   Name = "FrontFlip Button",
+   Callback = function()
+   N()
+   Rayfield:Notify({Title = "FrontFlip Button Activated", Content = "Show em your Flipping skills🤑", Duration = 3, Image = 4483362458})
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+local screenGui = playerGui:FindFirstChild("ScreenGui")
+
+if not screenGui then
+    screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "ScreenGui"
+    screenGui.Parent = playerGui
+end
+
+local imageButton = Instance.new("ImageButton")
+imageButton.Size = UDim2.new(0, 100, 0, 100) 
+imageButton.Position = UDim2.new(0.5, -50, 0.5, -50)
+imageButton.Image = "rbxassetid://106469685305878" -- Replace with your image asset ID
+imageButton.BackgroundTransparency = 1
+imageButton.Parent = screenGui
+
+imageButton.MouseButton1Click:Connect(function()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    local humanoid = character:WaitForChild("Humanoid")
+
+    humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, false)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.Running, false)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
+
+    local function performBackflip()
+        local duration = 0.45
+        local steps = 120
+        local startCFrame = humanoidRootPart.CFrame
+        local forwardVector = startCFrame.LookVector
+        local upVector = Vector3.new(0, 1, 0)
+
+        task.spawn(function()
+            local startTime = tick()
+            for i = 1, steps do
+                local t = i / steps
+                local height = 4 * (t - t ^ 2) * 10
+                local nextPos = startCFrame.Position + forwardVector * (35 * t) + upVector * height
+                local rotation = startCFrame.Rotation * CFrame.Angles(-math.rad(i * (360 / steps)), 0, 0)
+
+                humanoidRootPart.CFrame = CFrame.new(nextPos) * rotation
+                local elapsedTime = tick() - startTime
+                local expectedTime = (duration / steps) * i
+                local waitTime = expectedTime - elapsedTime
+                if waitTime > 0 then
+                    task.wait(waitTime)
+                end
+            end
+
+            humanoidRootPart.CFrame = CFrame.new(startCFrame.Position + forwardVector * 35) * startCFrame.Rotation
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, true)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Running, true)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
+            humanoid:ChangeState(Enum.HumanoidStateType.Running)
+        end)
+    end
+
+    performBackflip()
+end)
+
+local UserInputService = game:GetService("UserInputService")
+
+local dragging, dragInput, dragStart, startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    imageButton.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+imageButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = imageButton.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+imageButton.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
+   end,
+})
+
+local Section = Tab:CreateSection("Fe Animations")
+
+local animationTrack
+
+local Toggle = Tab:CreateToggle({
+    Name = "Masterbait",
+    CurrentValue = false,
+    Flag = "MasterbaitToggle",
+    Callback = function(Value)
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+
+        if humanoid then
+            if Value then
+                if not animationTrack or not animationTrack.IsPlaying then
+                    local animation = Instance.new("Animation")
+                    animation.AnimationId = "rbxassetid://72042024"
+                    animationTrack = humanoid:LoadAnimation(animation)
+                    animationTrack.Looped = true
+                    animationTrack:Play()
+                end
+            else
+                if animationTrack and animationTrack.IsPlaying then
+                    animationTrack:Stop()
+                end
+            end
+        end
+    end,
+}) 
+
+local Toggle = Tab:CreateToggle({
+    Name = "Arms-out Spin",
+    CurrentValue = false,
+    Flag = "ArmsOutSpinToggle",
+    Callback = function(Value)
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+
+        if humanoid then
+            if Value then
+                if not animationTrack or not animationTrack.IsPlaying then
+                    local animation = Instance.new("Animation")
+                    animation.AnimationId = "rbxassetid://235542946"
+                    animationTrack = humanoid:LoadAnimation(animation)
+                    animationTrack:Play()
+                end
+            else
+                if animationTrack and animationTrack.IsPlaying then
+                    animationTrack:Stop()
+                end
+            end
+        end
+    end,
+}) 
+
+local Toggle = Tab:CreateToggle({
+    Name = "Spinning Hands",
+    CurrentValue = false,
+    Flag = "SpinningHandsToggle",
+    Callback = function(Value)
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+
+        if humanoid then
+            if Value then
+                if not animationTrack or not animationTrack.IsPlaying then
+                    local animation = Instance.new("Animation")
+                    animation.AnimationId = "rbxassetid://259438880"
+                    animationTrack = humanoid:LoadAnimation(animation)
+                    animationTrack.Looped = true
+                    animationTrack:Play()
+                end
+            else
+                if animationTrack and animationTrack.IsPlaying then
+                    animationTrack:Stop()
+                end
+            end
+        end
+    end,
+}) 
+
+local Toggle = Tab:CreateToggle({
+    Name = "Jumping Jacks",
+    CurrentValue = false,
+    Flag = "JumpingJacksToggle",
+    Callback = function(Value)
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+
+        if humanoid then
+            if Value then
+                if not animationTrack or not animationTrack.IsPlaying then
+                    local animation = Instance.new("Animation")
+                    animation.AnimationId = "rbxassetid://429681631"
+                    animationTrack = humanoid:LoadAnimation(animation)
+                    animationTrack.Looped = true
+                    animationTrack:Play()
+                end
+            else
+                if animationTrack and animationTrack.IsPlaying then
+                    animationTrack:Stop()
+                end
+            end
+        end
+    end,
+})
+
+local Button = Tab:CreateButton({
+   Name = "slide Button",
+   Callback = function()
+   local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+local screenGui = playerGui:FindFirstChild("ScreenGui")
+
+if not screenGui then
+    screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "ScreenGui"
+    screenGui.Parent = playerGui
+end
+
+local imageButton = Instance.new("ImageButton")
+imageButton.Size = UDim2.new(0, 100, 0, 100)
+imageButton.Position = UDim2.new(0.5, -50, 0.5, -50)
+imageButton.Image = "rbxassetid://110777561976075"
+imageButton.BackgroundTransparency = 1
+imageButton.Parent = screenGui
+
+imageButton.MouseButton1Click:Connect(function()
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    local humanoid = character:WaitForChild("Humanoid")
+
+    local slideAnimation = Instance.new("Animation")
+    slideAnimation.AnimationId = "rbxassetid://182749109"
+    local slideAnimTrack = humanoid:LoadAnimation(slideAnimation)
+    slideAnimTrack:Play()
+
+    local TweenService = game:GetService("TweenService")
+    local slideDistance = 20  -- Slightly longer slide distance
+    local slideDuration = 0.8  -- Duration of the slide
+
+    local startCFrame = humanoidRootPart.CFrame
+    local endCFrame = startCFrame * CFrame.new(0, 0, -slideDistance) -- Move forward in the direction character is facing
+
+    local tweenInfo = TweenInfo.new(
+        slideDuration,
+        Enum.EasingStyle.Sine,
+        Enum.EasingDirection.Out
+    )
+
+    local tween = TweenService:Create(humanoidRootPart, tweenInfo, {CFrame = endCFrame})
+
+    tween:Play()
+    tween.Completed:Connect(function()
+        slideAnimTrack:Stop()
+    end)
+end)
+
+local UserInputService = game:GetService("UserInputService")
+
+local dragging, dragInput, dragStart, startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    imageButton.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+imageButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = imageButton.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+imageButton.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
+   end,
+})
+
+local cTab = Window:CreateTab("Credits", 92658304210178)
+
+local Paragraph = cTab:CreateParagraph({Title = "Note:", Content = "If you have any suggestions or to report smh, Please contact Me(Bob.47) On discord."})
+
+local Label = cTab:CreateLabel("hiiamcool0066_17937: a tester (plus helped through alot)", 81011198561140, Color3.fromRGB(90, 90, 90), false)
+
+local Label = cTab:CreateLabel("Creator: Bob.47", 70727208556993, Color3.fromRGB(90, 90, 90), false)
+
+local uTab = Window:CreateTab("Update Logs", 135332796802480)
+
+local Paragraph = uTab:CreateParagraph({
+    Title = "Future Updates (Will add soon):",
+    Content = "1- Corrupt Nature/Walkspeed Override aimbot\n 2- Will add an emote Gui With all emotes in it(Removed Emotes Included)"
+})
+
+local Paragraph = uTab:CreateParagraph({
+    Title = "Update Log:",
+    Content = " 1- Added The Characters Name with Player esp/n 2- Added 'Fe animations' In Fun tab\n 3- Added Ui Sounds when Pressing Buttons/toggles\n 4- Added a whole new ESP Features"
+})
