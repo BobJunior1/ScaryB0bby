@@ -1,0 +1,3317 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local function POLL(name)
+    for _, v in ipairs(game:GetDescendants()) do
+        if (v:IsA("Highlight") or v:IsA("BillboardGui")) and v.Name == name then
+            v:Destroy()
+        end
+    end
+end
+
+local skibdiSlider = 2.5
+local skibdiToggle
+local Number = 3
+
+-- Enhanced Emote GUI Script with Revised Central Tween Effect
+-- Place this in a LocalScript (e.g., StarterPlayerScripts)
+-----------------------------------------------------------
+-- Services & Player Setup
+-----------------------------------------------------------
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
+if not player then
+    warn("LocalPlayer is nil!")
+    return
+end
+local playerGui = player:WaitForChild("PlayerGui")
+
+-----------------------------------------------------------
+-- Flags to track dancing state and tween status
+-----------------------------------------------------------
+local isDancing = false
+local tweenInProgress = false
+
+-----------------------------------------------------------
+-- Main Screen GUI
+-----------------------------------------------------------
+local mainGui = Instance.new("ScreenGui")
+mainGui.Name = "EmoteGui"
+mainGui.ResetOnSpawn = false
+mainGui.Parent = playerGui
+
+-----------------------------------------------------------
+-- Enhanced Emote Toolbar Setup
+-----------------------------------------------------------
+local emoteToolbar = Instance.new("Frame")
+emoteToolbar.Name = "Emote"
+local fullSize = UDim2.new(0, 600, 0, 300)  -- Full toolbar size
+emoteToolbar.Size = fullSize
+emoteToolbar.AnchorPoint = Vector2.new(0.5, 0.5)
+emoteToolbar.Position = UDim2.new(0.5, 0, 0.5, 0)
+emoteToolbar.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+emoteToolbar.BorderSizePixel = 0
+emoteToolbar.Visible = false  -- Initially hidden
+emoteToolbar.Parent = mainGui
+
+-- Rounded Corners for smooth look
+local toolbarCorner = Instance.new("UICorner")
+toolbarCorner.CornerRadius = UDim.new(0, 15)
+toolbarCorner.Parent = emoteToolbar
+
+-- Gradient for depth
+local toolbarGradient = Instance.new("UIGradient")
+toolbarGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(35, 35, 35)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 15, 15))
+})
+toolbarGradient.Parent = emoteToolbar
+
+-- Optional drop shadow
+local shadow = Instance.new("Frame")
+shadow.Name = "Shadow"
+shadow.Size = fullSize
+shadow.Position = UDim2.new(0, 5, 0, 5)
+shadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+shadow.BackgroundTransparency = 0.5
+shadow.BorderSizePixel = 0
+shadow.ZIndex = emoteToolbar.ZIndex - 1
+shadow.Parent = emoteToolbar
+
+local shadowCorner = Instance.new("UICorner")
+shadowCorner.CornerRadius = toolbarCorner.CornerRadius
+shadowCorner.Parent = shadow
+
+-----------------------------------------------------------
+-- Title Label for the Toolbar
+-----------------------------------------------------------
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Name = "TitleLabel"
+titleLabel.Text = "Emotes"
+titleLabel.Size = UDim2.new(1, 0, 0, 30)
+titleLabel.Position = UDim2.new(0, 0, 0, 0)
+titleLabel.BackgroundTransparency = 1
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.TextScaled = true
+titleLabel.Parent = emoteToolbar
+
+-----------------------------------------------------------
+-- ScrollingFrame for Emote Buttons with Grid Layout
+-----------------------------------------------------------
+local scrollFrame = Instance.new("ScrollingFrame")
+scrollFrame.Name = "EmoteScroll"
+scrollFrame.Size = UDim2.new(1, -20, 1, -45)
+scrollFrame.Position = UDim2.new(0, 10, 0, 35)
+scrollFrame.BackgroundTransparency = 1
+scrollFrame.BorderSizePixel = 0
+scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+scrollFrame.Parent = emoteToolbar
+
+-- Grid layout for square emote buttons
+local gridLayout = Instance.new("UIGridLayout")
+gridLayout.CellSize = UDim2.new(0, 50, 0, 50) -- Each button is 50x50
+gridLayout.CellPadding = UDim2.new(0, 8, 0, 8)
+gridLayout.SortOrder = Enum.SortOrder.LayoutOrder
+gridLayout.Parent = scrollFrame
+
+gridLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    scrollFrame.CanvasSize = UDim2.new(0, 0, 0, gridLayout.AbsoluteContentSize.Y)
+end)
+
+-----------------------------------------------------------
+-- Tween Functions for Opening and Closing the Toolbar
+-----------------------------------------------------------
+
+-- Opens the toolbar using a two-step tween (pop effect) from the center.
+local function openToolbar()
+    if tweenInProgress then return end
+    tweenInProgress = true
+
+    emoteToolbar.Visible = true
+    emoteToolbar.BackgroundTransparency = 1
+    emoteToolbar.Size = UDim2.new(0, 0, 0, 0)
+    emoteToolbar.AnchorPoint = Vector2.new(0.5, 0.5)
+    emoteToolbar.Position = UDim2.new(0.5, 0, 0.5, 0)
+    
+    -- First tween: pop to an intermediate size
+    local midSize = UDim2.new(0, 50, 0, 25)
+    local tweenOpen1 = TweenService:Create(emoteToolbar, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = midSize, BackgroundTransparency = 0})
+    tweenOpen1:Play()
+    tweenOpen1.Completed:Wait()
+    
+    -- Second tween: expand to full size
+    local tweenOpen2 = TweenService:Create(emoteToolbar, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = fullSize})
+    tweenOpen2:Play()
+    tweenOpen2.Completed:Wait()
+    
+    tweenInProgress = false
+end
+
+-- Closes the toolbar using an inverse two-step tween effect.
+local function closeToolbar()
+    if tweenInProgress then return end
+    tweenInProgress = true
+    
+    -- First tween: shrink to the intermediate size
+    local midSize = UDim2.new(0, 50, 0, 25)
+    local tweenClose1 = TweenService:Create(emoteToolbar, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Size = midSize})
+    tweenClose1:Play()
+    tweenClose1.Completed:Wait()
+    
+    -- Second tween: shrink to 0 size and fade out
+    local tweenClose2 = TweenService:Create(emoteToolbar, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Size = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1})
+    tweenClose2:Play()
+    tweenClose2.Completed:Wait()
+    
+    emoteToolbar.Visible = false
+    emoteToolbar.BackgroundTransparency = 0
+    emoteToolbar.Size = fullSize
+    tweenInProgress = false
+end
+
+-----------------------------------------------------------
+-- Function: Create a Stylish Square Emote Button
+-----------------------------------------------------------
+local function createEmoteButton(emoteName)
+    local button = Instance.new("TextButton")
+    button.Name = "EmoteButton_" .. emoteName
+    button.Size = UDim2.new(0, 50, 0, 50)
+    button.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
+    button.Text = emoteName
+    button.Font = Enum.Font.GothamBold
+    button.TextScaled = true
+    button.TextColor3 = Color3.fromRGB(240, 240, 240)
+    button.BorderSizePixel = 0
+    button.AutoButtonColor = false
+    button.Parent = scrollFrame
+
+    local buttonCorner = Instance.new("UICorner")
+    buttonCorner.CornerRadius = UDim.new(0, 10)
+    buttonCorner.Parent = button
+
+    local uiStroke = Instance.new("UIStroke")
+    uiStroke.Thickness = 2
+    uiStroke.Color = Color3.fromRGB(30, 30, 30)
+    uiStroke.Parent = button
+
+    local tweenInfo = TweenInfo.new(0.15, Enum.EasingStyle.Quad)
+    button.MouseEnter:Connect(function()
+        local tween = TweenService:Create(button, tweenInfo, {BackgroundColor3 = Color3.fromRGB(75, 75, 75)})
+        tween:Play()
+    end)
+    button.MouseLeave:Connect(function()
+        local tween = TweenService:Create(button, tweenInfo, {BackgroundColor3 = Color3.fromRGB(55, 55, 55)})
+        tween:Play()
+    end)
+
+    button.MouseButton1Click:Connect(function()
+        -- Fire the emote play event
+        local args = {"PlayEmote", "Animations", emoteName}
+        local remoteEvent = game:GetService("ReplicatedStorage")
+                             :WaitForChild("Modules")
+                             :WaitForChild("Network")
+                             :WaitForChild("RemoteEvent")
+        remoteEvent:FireServer(unpack(args))
+        
+        isDancing = true
+        
+        -- Close the toolbar using our revised tween function.
+        closeToolbar()
+    end)
+end
+
+-- Create Emote Buttons from Purchased Emotes
+local purchasedEmotes = player:WaitForChild("PlayerData"):WaitForChild("Purchased"):WaitForChild("Emotes")
+for _, emote in ipairs(purchasedEmotes:GetChildren()) do
+    createEmoteButton(emote.Name)
+end
+
+-----------------------------------------------------------
+-- Toggle Button (Stylish Circular Icon)
+-----------------------------------------------------------
+local toggleButton = Instance.new("ImageButton")
+toggleButton.Name = "ToggleButton"
+toggleButton.Size = UDim2.new(0, 50, 0, 50)
+toggleButton.Position = UDim2.new(1, -320, 0, -50)
+toggleButton.BackgroundTransparency = 1
+toggleButton.Image = "rbxassetid://117823860306601"
+toggleButton.Parent = mainGui
+
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.CornerRadius = UDim.new(1, 0)
+toggleCorner.Parent = toggleButton
+
+local toggleStroke = Instance.new("UIStroke")
+toggleStroke.Thickness = 2
+toggleStroke.Color = Color3.fromRGB(30, 30, 30)
+toggleStroke.Parent = toggleButton
+
+-----------------------------------------------------------
+-- Toggle Functionality with Revised Tween Effect
+-----------------------------------------------------------
+toggleButton.MouseButton1Click:Connect(function()
+    if tweenInProgress then return end
+
+    if isDancing then
+        local purchased = player:WaitForChild("PlayerData"):WaitForChild("Purchased"):WaitForChild("Emotes")
+        for _, emote in ipairs(purchased:GetChildren()) do
+            local args = {"StopEmote", "Animations", emote.Name}
+            local remoteEvent = game:GetService("ReplicatedStorage")
+                                 :WaitForChild("Modules")
+                                 :WaitForChild("Network")
+                                 :WaitForChild("RemoteEvent")
+            remoteEvent:FireServer(unpack(args))
+        end
+        isDancing = false
+        closeToolbar()
+    elseif emoteToolbar.Visible then
+        closeToolbar()
+    else
+        openToolbar()
+    end
+end)
+
+if game.PlaceId == 18687417158 then
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Hello!",
+        Text = "Welcome to B0bby Hub!",
+        Image = "",
+        Duration = 5
+    })
+
+    wait(2)
+
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Script Loading..",
+        Text = "Please wait for the script to load.",
+        Image = "",
+        Duration = 5
+    })
+    end
+local function BobIsCool()
+setclipboard("https://discord.gg/cer5bZrdrA")
+local Window = Rayfield:CreateWindow({
+   Name = "B0bbyHub / Forsaken",
+   Icon = 106975314970201, -- Icon in Topbar. Can use Lucide Icons (string) or Roblox Image (number). 0 to use no icon (default).
+   LoadingTitle = "B0bbyhub / Forsaken",
+   LoadingSubtitle = "Loading..",
+   Theme = "AmberGlow", -- Check https://docs.sirius.menu/rayfield/configuration/themes
+
+   DisableRayfieldPrompts = false,
+   DisableBuildWarnings = false, -- Prevents Rayfield from warning when the script has a version mismatch with the interface
+
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = nil, -- Create a custom folder for your hub/game
+      FileName = "IgnoreThis"
+   },
+
+   Discord = {
+      Enabled = false, -- Prompt the user to join your Discord server if their executor supports it
+      Invite = "cer5bZrdrA", -- The Discord invite code, do not include discord.gg/. E.g. discord.gg/ ABCD would be ABCD
+      RememberJoins = true -- Set this to false to make them join the discord every time they load it up
+   },
+
+   KeySystem = true, -- Set this to true to use our key system
+   KeySettings = {
+      Title = "B0bbyhub | Keysystem",
+      Subtitle = "Discord copied to clipboard",
+      Note = "Get the key at B0bbyhub's discord", -- Use this to tell the user how to get a key
+      FileName = "BombbombBobbyKey", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
+      SaveKey = true, -- The user's key will be saved, but if you change the key, they will be unable to use your script
+      GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
+      Key = {" ","Samuelspizzatrip","BOBBYHUBKEYWJJEBEKEI1827272"," BOBBYHUBKEYWJJEBEKEI1827272","BOBBYHUBKEYWJJEBEKEI1827272 "} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
+   }
+})
+
+
+
+local MainTab = Window:CreateTab("Main", "home") -- Title, Image
+local STab = Window:CreateTab("Stamina", "accessibility") -- Title, Image
+local ETab = Window:CreateTab("Effects", "wand-sparkles") -- Title, Image
+local GTab = Window:CreateTab("Generators", "cpu")
+local ATab = Window:CreateTab("Aimbot / Player", "crosshair")
+local FunTab = Window:CreateTab("Fun", "smile")
+local cTab = Window:CreateTab("Credits", "clipboard")
+local SetTab = Window:CreateTab("Settings", "settings") -- Title, Image
+
+Rayfield:Notify({
+   Title = "Made by Bob.47",
+   Content = "Cool",
+   Duration = 6.5,
+   Image = 4483362458,
+})
+-- Get the player's PlayerGui to display the GUI on screen
+
+local Section = MainTab:CreateSection("Esp")
+
+local CNN
+local IC
+local PLC
+local bobifhewasaplayerscript = false
+local IngameFolder = workspace.Map.Ingame
+
+
+local ToggleKillerESP = MainTab:CreateToggle({
+   Name = "Killer | Esp",
+   CurrentValue = false,
+   Flag = "ToggleKIlllerESP1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Value)
+if Value then
+local Killers = workspace.Players.Killers
+local Players = game.Workspace:WaitForChild("Players")
+local RunService = game:GetService("RunService")
+local function createOutlineESP(model, outlineColor, fillColor)
+    local highlight = model:FindFirstChild("Highlight")
+    if not highlight then
+        highlight = Instance.new("Highlight")
+        highlight.Name = "KillerESP"
+        highlight.Parent = model
+        highlight.Adornee = model
+    end
+    highlight.FillTransparency = 0.50
+    highlight.FillColor = fillColor
+    highlight.OutlineColor = outlineColor
+    highlight.OutlineTransparency = 0
+end
+local function createBillboardGui(target, text, color)
+    local billboardGui = target:FindFirstChildOfClass("BillboardGui")
+    if not billboardGui then
+        billboardGui = Instance.new("BillboardGui")
+        billboardGui.Adornee = target
+        billboardGui.Name = "KillerESP"
+        billboardGui.Size = UDim2.new(0, 100, 0, 25)
+        billboardGui.AlwaysOnTop = true
+        billboardGui.Parent = target.Parent
+        billboardGui.StudsOffset = Vector3.new(0, 2, 0) 
+        local textLabel = Instance.new("TextLabel")
+        textLabel.Size = UDim2.new(1, 0, 1, 0)
+        textLabel.BackgroundTransparency = 1
+        textLabel.TextScaled = true
+        textLabel.TextColor3 = color
+        textLabel.Text = text
+        textLabel.Font = Enum.Font.Antique
+        textLabel.Parent = billboardGui
+    else
+        billboardGui.TextLabel.Text = text
+        billboardGui.TextLabel.TextColor3 = color
+        billboardGui.TextLabel.Font = Enum.Font.Antique
+        billboardGui.StudsOffset = Vector3.new(0, 2, 0)  -- Apply offset even if BillboardGui already exists
+    end
+end
+local function applyHighlighting(model)
+    local humanoid = model:FindFirstChildOfClass("Humanoid")
+    if humanoid and model:FindFirstChild("HumanoidRootPart") then
+        createOutlineESP(model, Color3.fromRGB(255, 0, 0), Color3.fromRGB(150, 0, 0))  -- Dark red colors
+        createBillboardGui(model:FindFirstChild("HumanoidRootPart"), model.Name, Color3.fromRGB(255, 0, 0))  -- Dark red color
+    end
+end
+local function highlightKillers()
+    local killersGroup = Players:FindFirstChild("Killers")
+    if killersGroup then
+        for _, killer in pairs(killersGroup:GetChildren()) do
+            applyHighlighting(killer)
+        end
+    end
+end
+highlightKillers()
+CNN = Killers.ChildAdded:Connect(highlightKillers)
+CNN = Players.DescendantAdded:Connect(function(descendant)
+    if descendant.Parent and descendant.Parent.Name == "Killers" then
+        applyHighlighting(descendant)
+    end
+end)
+CNN = Players.DescendantRemoving:Connect(function(descendant)
+    if descendant:IsA("Model") and descendant.Name == "Killers" then
+        descendant.AncestryChanged:Connect(function(_, parent)
+            if parent then
+                applyHighlighting(descendant)
+            end
+        end)
+    end
+end)
+else
+POLL("KillerESP")
+CNN:Disconnect()
+CNN = nil
+end
+   end,
+})
+
+local aLoop = false
+local connections = {}  -- to store event connections
+
+local GeneratorESP = MainTab:CreateToggle({
+    Name = "Generator | ESP",
+    CurrentValue = false,
+    Flag = "GeneratorToggleESP1", -- Unique flag for configuration saving.
+    Callback = function(Value)
+        aLoop = Value
+        if aLoop then
+            local mapFolder = workspace:WaitForChild("Map")
+            local ingameFolder = mapFolder:WaitForChild("Ingame")
+            local UPDATE_INTERVAL = 1 -- seconds between update loops
+            local innerMapFolder
+
+            -- Function to get the latest innerMapFolder
+            local function getInnerMapFolder()
+                innerMapFolder = ingameFolder:FindFirstChild("Map")
+                return innerMapFolder
+            end
+
+            local function setGeneratorHighlight(generator, fillcol, outlinecol)
+                local highlight = generator:FindFirstChild("GeneratorHigh")
+                if not highlight then
+                    highlight = Instance.new("Highlight")
+                    highlight.Name = "GeneratorHigh"
+                    highlight.Parent = generator
+                    highlight.Adornee = generator
+                end
+                highlight.FillColor = Color3.new(fillcol[1], fillcol[2], fillcol[3])
+                highlight.OutlineColor = Color3.new(outlinecol[1], outlinecol[2], outlinecol[3])
+            end
+
+            local function updateGeneratorUI(generator)
+                local mainPart = generator:FindFirstChild("Main")
+                if not mainPart then
+                    return
+                end
+
+                -- Create or find the BillboardGui
+                local billboard = mainPart:FindFirstChild("GeneratorHighBillboard")
+                if not billboard then
+                    billboard = Instance.new("BillboardGui")
+                    billboard.Name = "GeneratorHighBillboard"  -- consistently named
+                    billboard.Adornee = mainPart
+                    billboard.Size = UDim2.new(0, 150, 0, 30)
+                    billboard.AlwaysOnTop = true
+                    billboard.Parent = mainPart
+
+                    local textLabel = Instance.new("TextLabel")
+                    textLabel.Name = "GeneratorTextLabel"  -- consistent naming for update later
+                    textLabel.Size = UDim2.new(0.8, 0, 0.8, 0)
+                    textLabel.BackgroundTransparency = 1
+                    textLabel.TextScaled = true
+                    textLabel.Font = Enum.Font.Antique
+                    textLabel.Text = "Initializing..."
+                    textLabel.TextColor3 = Color3.new(1, 1, 1)
+                    textLabel.Parent = billboard
+                end
+
+                local textLabel = billboard:FindFirstChild("GeneratorTextLabel")
+                if not textLabel then 
+                    return 
+                end
+
+                local isFixed = (mainPart:FindFirstChild("generatorActivate") ~= nil)
+
+                if isFixed then
+                    textLabel.Text = "Generator: Fixed"
+                    textLabel.TextColor3 = Color3.new(0, 0.5, 0)
+                    setGeneratorHighlight(generator, {0, 0.5, 0}, {0, 1, 0})
+                else
+                    textLabel.Text = "Generator: Not Fixed"
+                    textLabel.TextColor3 = Color3.new(0.8, 0, 0)
+                    setGeneratorHighlight(generator, {0.5, 0, 0}, {1, 0, 0})
+                end
+
+                -- Set an attribute for further reference if needed
+                generator:SetAttribute("GeneratorState", isFixed)
+            end
+
+            -- Updates every generator found in the current folder
+            local function setupGenerators()
+                local folder = getInnerMapFolder()
+                if folder then
+                    for _, obj in ipairs(folder:GetChildren()) do
+                        if obj.Name == "Generator" and obj:IsA("Model") then
+                            updateGeneratorUI(obj)
+                        end
+                    end
+                end
+            end
+
+            -- Disconnect any previous event connections when stopping
+            local function clearConnections()
+                for _, conn in ipairs(connections) do
+                    if conn then conn:Disconnect() end
+                end
+                connections = {}
+            end
+
+            -- Monitor for changes in the folder and update UI accordingly.
+            local function monitorFolder()
+                while aLoop do
+                    task.wait(1)
+                    local newFolder = getInnerMapFolder()
+                    
+                    if newFolder then
+                        setupGenerators()
+
+                        -- Connect once to ensure that new descendants are updated.
+                        local conn = newFolder.DescendantAdded:Connect(function(child)
+                            if not aLoop then 
+                                return 
+                            end
+                            local generator
+                            if child.Name == "Generator" and child:IsA("Model") then
+                                generator = child
+                            elseif child.Name == "Main" and child.Parent and child.Parent.Name == "Generator" then
+                                generator = child.Parent
+                            end
+                            if generator then
+                                updateGeneratorUI(generator)
+                            end
+                        end)
+                        -- Store this connection so it can be disconnected later.
+                        table.insert(connections, conn)
+                    end
+                end
+            end
+
+            -- Initial update and start monitor thread.
+            setupGenerators()
+            task.spawn(monitorFolder)
+
+            -- Main update loop that periodically refreshes generator UIs.
+            while aLoop do
+                local folder = getInnerMapFolder()
+                if folder then
+                    for _, generator in ipairs(folder:GetChildren()) do
+                        if generator.Name == "Generator" and generator:IsA("Model") then
+                            updateGeneratorUI(generator)
+                        end
+                    end
+                end
+                task.wait(UPDATE_INTERVAL)
+            end
+            
+            -- Cleanup when the toggle is turned off.
+            clearConnections()
+        else
+            aLoop = false
+            -- Optionally perform any additional cleanup
+            POLL("GenESP")  -- Assuming POLL is a valid function for your context.
+        end
+    end,
+})
+
+local itemEspTOGGLE = MainTab:CreateToggle({
+   Name = "Items | Esp",
+   CurrentValue = false,
+   Flag = "ItemToggle1Esp", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Value)
+          if Value then
+          local Workspace = game:GetService("Workspace")
+
+local function createHighlight(model, outlineColor, fillColor)
+    if model and not model:FindFirstChildOfClass("Highlight") then
+        local highlight = Instance.new("Highlight")
+        highlight.Name = "ItemESP"
+        highlight.Parent = model
+        highlight.Adornee = model
+        highlight.FillTransparency = 0.75
+        highlight.FillColor = fillColor
+        highlight.OutlineColor = outlineColor
+        highlight.OutlineTransparency = 0
+    end
+end
+
+local function createBillboardGui(target, text, color)
+    if target and not target:FindFirstChildOfClass("BillboardGui") then
+        local billboardGui = Instance.new("BillboardGui")
+        billboardGui.Name = "ItemESP"
+        billboardGui.Adornee = target
+        billboardGui.Size = UDim2.new(0, 100, 0, 25)
+        billboardGui.AlwaysOnTop = true
+        billboardGui.Parent = target
+
+        local textLabel = Instance.new("TextLabel")
+        textLabel.Size = UDim2.new(1, 0, 1, 0)
+        textLabel.BackgroundTransparency = 1
+        textLabel.TextScaled = true
+        textLabel.TextColor3 = color
+        textLabel.Text = text
+        textLabel.Font = Enum.Font.Antique  
+        textLabel.Parent = billboardGui
+    end
+end
+
+local function applyHighlighting(item)
+    local targetPart = item:IsA("Model") and item:FindFirstChildWhichIsA("BasePart")
+    if targetPart then
+        local color
+        if item.Name == "BloxyCola" then
+            color = Color3.fromRGB(204, 153, 0)  -- Dark yellow
+        elseif item.Name == "Medkit" then
+            color = Color3.fromRGB(128, 0, 128)  -- Purple
+        elseif item.Name == "SubspaceTripmine" and not item:IsDescendantOf(Workspace.Players.Survivors) then
+            color = Color3.fromRGB(0, 191, 255)  -- Deep Sky Blue
+        else
+            return  
+        end
+        createHighlight(targetPart, color, color)
+        createBillboardGui(targetPart, item.Name, color)
+    end
+end
+
+local function highlightItems()
+    for _, item in pairs(Workspace:GetDescendants()) do
+        if item:IsA("Model") and (item.Name == "BloxyCola" or item.Name == "Medkit" or (item.Name == "SubspaceTripmine" and not item:IsDescendantOf(Workspace.Players.Survivors))) then
+            applyHighlighting(item)
+        end
+    end
+end
+
+highlightItems()
+
+IC = Workspace.DescendantAdded:Connect(function(descendant)
+    if descendant:IsA("Model") and (descendant.Name == "BloxyCola" or descendant.Name == "Medkit" or (descendant.Name == "SubspaceTripmine" and not descendant:IsDescendantOf(Workspace.Players.Survivors))) then
+        wait(1)  
+        applyHighlighting(descendant)
+    end
+end)
+
+IC = Workspace.DescendantRemoving:Connect(function(descendant)
+    if descendant:IsA("Model") then
+        local highlight = descendant:FindFirstChildOfClass("Highlight")
+        if highlight then
+            highlight:Destroy()
+        end
+
+        local billboardGui = descendant:FindFirstChildOfClass("BillboardGui")
+        if billboardGui then
+            billboardGui:Destroy()
+        end
+    end
+end)
+              else
+IC:Disconnect()
+IC = nil
+POLL("ItemESP")
+              end
+   end,
+})
+
+local SURVIORToggle = MainTab:CreateToggle({
+   Name = "Survivor | Esp",
+   CurrentValue = false,
+   Flag = "PLAYERESPOHMYGOSHITSTOGGLEABLE", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Value)
+   bobifhewasaplayerscript = Value
+     if bobifhewasaplayerscript then
+local Survivors = workspace.Players.Survivors
+local PlayersService = game:GetService("Players")
+
+local function createESP(model, outlineCol, fillCol)
+    if model and not model:FindFirstChildOfClass("Highlight") then
+        local hl = Instance.new("Highlight")
+        hl.Name = "PlayerESP"
+        hl.Parent = model
+        hl.Adornee = model
+        hl.FillTransparency = 0.75
+        hl.FillColor = fillCol
+        hl.OutlineColor = outlineCol
+        hl.OutlineTransparency = 0
+    end
+end
+
+local function createOrUpdateHealthUI(character, textCol)
+    local head = character:FindFirstChild("Head")
+    if head then
+        local healthGui = head:FindFirstChild("HealthGui")
+        if not healthGui then
+            healthGui = Instance.new("BillboardGui")
+            healthGui.Name = "PlayerESP"
+            healthGui.Size = UDim2.new(0, 100, 0, 60)  -- Increased height to accommodate both labels
+            healthGui.AlwaysOnTop = true
+            healthGui.MaxDistance = math.huge
+            healthGui.Parent = head
+            healthGui.StudsOffset = Vector3.new(0, 3, 0)  -- Adjust the height of each GUI
+
+            local healthLabel = Instance.new("TextLabel")
+            healthLabel.Name = "HealthLabel"
+            healthLabel.Size = UDim2.new(1, 0, 0.5, 0)  -- Adjusted size to fit both labels
+            healthLabel.Position = UDim2.new(0, 0, 0.5, 0)
+            healthLabel.BackgroundTransparency = 1
+            healthLabel.TextScaled = true
+            healthLabel.Text = ""
+            healthLabel.TextColor3 = textCol
+            healthLabel.Font = Enum.Font.Antique
+            healthLabel.Parent = healthGui
+
+            local nameLabel = Instance.new("TextLabel")
+            nameLabel.Name = "NameLabel"
+            nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
+            nameLabel.Position = UDim2.new(0, 0, 0, 0)  -- Positioned above the health label
+            nameLabel.BackgroundTransparency = 1
+            nameLabel.TextScaled = true
+            nameLabel.Text = character.Name
+            nameLabel.TextColor3 = textCol
+            nameLabel.Font = Enum.Font.Antique
+            nameLabel.Parent = healthGui
+        else
+            local healthLabel = healthGui:FindFirstChild("HealthLabel")
+            local nameLabel = healthGui:FindFirstChild("NameLabel")
+            if healthLabel then
+                healthLabel.TextColor3 = textCol
+            end
+            if nameLabel then
+                nameLabel.TextColor3 = textCol
+            end
+        end
+    end
+end
+
+local function updateHealthUI()
+    for _, survivor in ipairs(Survivors:GetChildren()) do
+        local character = survivor
+        if character then
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            local head = character:FindFirstChild("Head")
+            if humanoid and head then
+                local textCol = humanoid.MaxHealth > 500 and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(255, 255, 255)
+                createOrUpdateHealthUI(character, textCol)
+
+                local healthGui = head:FindFirstChild("PlayerESP")
+                if healthGui then
+                    local healthLabel = healthGui:FindFirstChild("HealthLabel")
+                    if healthLabel then
+                        healthLabel.Text = math.floor(humanoid.Health) .. "/" .. humanoid.MaxHealth
+                    end
+                end
+            end
+        end
+    end
+end
+
+local function applyESP()
+    for _, survivor in ipairs(Survivors:GetChildren()) do
+        local character = survivor
+        if character then
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                local fillCol = Color3.fromRGB(128, 128, 128)
+                local outlineCol = Color3.fromRGB(255, 255, 255)
+
+                createESP(character, outlineCol, fillCol)
+                createOrUpdateHealthUI(character, outlineCol)
+            end
+        end
+    end
+end
+
+applyESP()
+
+PLC = Survivors.ChildAdded:Connect(function(character)
+    wait(1)
+    applyESP()
+end)
+
+PLC = Survivors.ChildRemoved:Connect(function(character)
+    local hl = character:FindFirstChildOfClass("Highlight")
+    if hl then
+        hl:Destroy()
+    end
+
+    local head = character:FindFirstChild("Head")
+    if head then
+        local healthGui = head:FindFirstChild("HealthGui")
+        if healthGui then
+            healthGui:Destroy()
+        end
+    end
+end)
+
+while bobifhewasaplayerscript do
+    applyESP()
+    updateHealthUI()
+    wait(1)
+end
+        else
+bobifhewasaplayerscript = false
+POLL("PlayerESP")
+PLC:Disconnect()
+PLC = nil
+        end
+   end,
+})
+
+
+local ZOnexButton = MainTab:CreateButton({
+   Name = "1x1x1x1 Zombie esp",
+   Callback = function()
+highlightEntity("1x1x1x1Zombie", Color3.fromRGB(0, 100, 0), "1x1x1x1 Zombie")
+   end,
+})
+
+local PDButton = MainTab:CreateButton({
+   Name = "Pizza Delivery Minion esp",
+   Callback = function()
+highlightEntity("PizzaDeliveryRig", Color3.fromRGB(139, 0, 0), "Pizza Delivery Minion")
+   end,
+})
+
+local Button = MainTab:CreateButton({
+   Name = "Elliot's Pizza esp",
+   Callback = function()
+highlightEntity("Pizza", Color3.fromRGB(255, 165, 0), "Pizza")
+   end,
+})
+
+local Button = MainTab:CreateButton({
+    Name = "Builderman Sentry/Dispenser esp",
+    Callback = function()
+        local IngameFolder = workspace.Map.Ingame
+        local sentryTargets = {"BuildermanSentryEffectRange", "BuildermanSentry"}
+        local dispenserTargets = {"BuildermanDispenserEffectRange", "BuildermanDispenser"}
+        local highlightColorSentry = Color3.fromRGB(0, 0, 255)  -- Blue color for BuildermanSentry
+        local highlightColorEffectRange = Color3.fromRGB(255, 0, 0)  -- Red color for BuildermanSentryEffectRange
+        local highlightColorDispenser = Color3.fromRGB(0, 255, 0)  -- Green color for BuildermanDispenser
+
+        local function createHighlight(target, color, label)
+            if target and not target:FindFirstChildOfClass("Highlight") then
+                local hl = Instance.new("Highlight")
+                hl.Parent = target
+                hl.Adornee = target
+                hl.FillTransparency = 0.75
+                hl.FillColor = color
+                hl.OutlineColor = color
+                hl.OutlineTransparency = 0
+
+                local billboardGui = Instance.new("BillboardGui")
+                billboardGui.Name = label .. "Label"
+                billboardGui.Size = UDim2.new(0, 100, 0, 50)
+                billboardGui.AlwaysOnTop = true
+                billboardGui.MaxDistance = math.huge
+                billboardGui.Parent = target
+                billboardGui.StudsOffset = Vector3.new(0, 3, 0)  -- Adjust the height of the GUI
+
+                local textLabel = Instance.new("TextLabel")
+                textLabel.Size = UDim2.new(1, 0, 1, 0)
+                textLabel.BackgroundTransparency = 1
+                textLabel.TextScaled = true
+                textLabel.Text = label
+                textLabel.TextColor3 = color
+                textLabel.Font = Enum.Font.Antique
+                textLabel.Parent = billboardGui
+            end
+        end
+
+        local function checkAndHighlight(targetNames, color, label)
+            for _, targetName in ipairs(targetNames) do
+                local target = IngameFolder:FindFirstChild(targetName)
+                if target then
+                    createHighlight(target, color, label)
+                end
+            end
+        end
+
+        checkAndHighlight(sentryTargets, highlightColorSentry, "Sentry")
+        checkAndHighlight(dispenserTargets, highlightColorDispenser, "Dispenser")
+
+        IngameFolder.ChildAdded:Connect(function(child)
+            if child.Name == "BuildermanSentry" or child.Name == "BuildermanSentryEffectRange" then
+                createHighlight(child, highlightColorSentry, "Sentry")
+            elseif child.Name == "BuildermanDispenser" or child.Name == "BuildermanDispenserEffectRange" then
+                createHighlight(child, highlightColorDispenser, "Dispenser")
+            end
+        end)   
+    end,
+})
+
+local RespawnButton = MainTab:CreateButton({
+    Name = "Respawn point Esp",
+    Callback = function()
+ local IngameFolder = workspace.Map.Ingame
+
+-- Function to create only the BillboardGui
+local function createBillboard(target)
+    if target and not target:FindFirstChildWhichIsA("BillboardGui") then
+        -- Extract the player's name from the target's name (everything before "RespawnLocation")
+        local playerName = target.Name:match("^(.-)RespawnLocation") or "Unknown"
+
+        local billboardGui = Instance.new("BillboardGui")
+        billboardGui.Name = playerName .. "Label"  -- Label includes the player's name.
+        billboardGui.Size = UDim2.new(0, 150, 0, 50)
+        billboardGui.AlwaysOnTop = true
+        billboardGui.MaxDistance = math.huge
+        billboardGui.Parent = target
+        billboardGui.StudsOffset = Vector3.new(0, 3, 0)  -- Adjust the height of the GUI
+
+        local textLabel = Instance.new("TextLabel")
+        textLabel.Size = UDim2.new(1, 0, 1, 0)
+        textLabel.BackgroundTransparency = 1
+        textLabel.TextScaled = true
+        textLabel.Text = playerName .. " Respawn Point"  -- Updated format
+        textLabel.TextColor3 = Color3.fromRGB(80, 80, 80)  -- Dark orange color
+        textLabel.Font = Enum.Font.Antique
+        textLabel.Parent = billboardGui
+    end
+end
+
+-- Helper function to check if an object is a RespawnLocation variant and then apply the BillboardGui
+local function checkAndBillboard(target)
+    if target and target.Name:find("RespawnLocation") then
+        createBillboard(target)
+    end
+end
+
+-- Iterate over any existing children in the Ingame folder
+for _, child in ipairs(IngameFolder:GetChildren()) do
+    checkAndBillboard(child)
+end
+
+-- Listen for new RespawnLocation instances added to the folder
+IngameFolder.ChildAdded:Connect(function(child)
+    checkAndBillboard(child)
+end)
+    end,
+})
+
+
+
+local SectrionnnnnnnnSection = MainTab:CreateSection("other")
+
+
+local FovSlider = MainTab:CreateSlider({
+   Name = "Fov",
+   Range = {30, 120},
+   Increment = 10,
+   Suffix = "FoV",
+   CurrentValue = 30,
+   Flag = "Fovslider", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Value)
+print(Value)
+   end,
+})
+
+
+local player = game.Players.LocalPlayer
+local track
+local toggleState = false -- Tracks whether the toggle is on or off
+
+-- Function to set up the animation
+local function setupAnimation(character)
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+
+    local animation = Instance.new("Animation")
+    animation.AnimationId = "rbxassetid://75804462760596"
+
+    local animator = humanoid:FindFirstChildOfClass("Animator") or humanoid:WaitForChild("Animator")
+    track = animator:LoadAnimation(animation)
+
+    -- If the toggle was enabled before respawn, replay the animation
+    if toggleState then
+        track:Play()
+        task.wait(0.00025)
+        track:AdjustSpeed(0) -- Freeze animation
+    end
+end
+
+-- Toggle integration (initialize once)
+local FuckinginvisbultyToggle = MainTab:CreateToggle({
+    Name = "Invisibility",
+    CurrentValue = false,
+    Callback = function(Value)
+        toggleState = Value -- Update toggle state
+
+        if track then
+            if Value then
+                track:Play()
+                task.wait(0.00025)
+                track:AdjustSpeed(0) -- Freeze animation
+            else
+                track:Stop()
+            end
+        end
+    end,
+})
+
+-- Set up the animation for the current character
+if player.Character then
+    setupAnimation(player.Character)
+end
+
+-- Listen for character respawn
+player.CharacterAdded:Connect(setupAnimation)
+
+local nugga = MainTab:CreateButton({
+   Name = "Instant Proximity prompt (Instant interaction)",
+   Callback = function()
+for _, prom in next, workspace:GetDescendants() do
+  if prom:IsA("ProximityPrompt") then
+    prom.PromptButtonHoldBegan:Connect(function()
+       if prom.HoldDuration <= 0 then return end
+      fireproximityprompt(prom, 0)
+    end)
+  end
+end
+
+workspace.DescendantAdded:Connect(function(class)
+  if class:IsA("ProximityPrompt") then
+    class.PromptButtonHoldBegan:Connect(function()
+        if class.HoldDuration <= 0 then return end
+      fireproximityprompt(class, 0)
+    end)
+  end
+end)
+   end,
+})
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+-- Utility function to get the current character and its Humanoid
+local function getCharacter()
+    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local humanoid = character and character:FindFirstChildWhichIsA("Humanoid")
+    return character, humanoid
+end
+
+-- Teleportation mechanic with adjustable speed
+local function startTpWalk(speedMultiplier, duration)
+    local character, humanoid = getCharacter()
+    if not character or not humanoid then return end
+
+    local startTime = tick()
+    local connection
+    connection = RunService.Heartbeat:Connect(function(delta)
+        if tick() - startTime > duration then
+            connection:Disconnect()
+            return
+        end
+        if humanoid.MoveDirection.Magnitude > 0 then
+            local speed = speedMultiplier * delta
+            character:TranslateBy(humanoid.MoveDirection * speed)
+        end
+    end)
+end
+
+-- Define your target animation id
+local TargetAnimationId = "rbxassetid://18885932392"
+
+-- This function is called when an animation is played
+local function onAnimationPlayed(animationTrack)
+    if animationTrack.Animation.AnimationId == TargetAnimationId then
+        startTpWalk(10, 3) -- Boost speed for 3 seconds
+        task.wait(3)
+        startTpWalk(1, 3)  -- Reset to normal speed for another 3 seconds
+    end
+end
+
+-- Variable to hold the animation connection for later disconnection
+local animationConnection = nil
+
+-- Function to enable the animation listener
+local function enableAnimationListener()
+    local character, humanoid = getCharacter()
+    if humanoid then
+        animationConnection = humanoid.AnimationPlayed:Connect(onAnimationPlayed)
+    end
+end
+
+-- Function to disable the animation listener
+local function disableAnimationListener()
+    if animationConnection then
+        animationConnection:Disconnect()
+        animationConnection = nil
+    end
+end
+
+-- Rayfield Toggle - When enabled, the animation listener is active.
+local TogglIcre = MainTab:CreateToggle({
+    Name = "Control walkspeed override",
+    CurrentValue = false,
+    Flag = "osoww",
+    Callback = function(Value)
+        if Value then
+            enableAnimationListener()
+        else
+            disableAnimationListener()
+        end
+    end,
+})
+
+local Lighting = game:GetService("Lighting") -- Accessing the Lighting service
+
+local FullBrightButton = MainTab:CreateButton({
+    Name = "Fullbright",
+    Callback = function()
+-- Set bright daylight settings
+Lighting.TimeOfDay = "12:00:00" -- Midday for maximum brightness
+Lighting.FogStart = 100000 -- Push fog further for clearer visuals
+Lighting.FogEnd = 300000 -- Extend fog end for an open, bright atmosphere
+Lighting.FogColor = Color3.fromRGB(255, 255, 255) -- Pure white for brighter fog
+Lighting.GlobalShadows = true -- Keep depth-enhancing shadows
+Lighting.Technology = Enum.Technology.Future -- Use advanced lighting for sharper detail
+Lighting.Ambient = Color3.fromRGB(230, 230, 230) -- Brighter ambient lighting
+Lighting.OutdoorAmbient = Color3.fromRGB(220, 220, 220) -- Increased outdoor ambient light
+
+-- Additional enhancements
+Lighting.Brightness = 3 -- Boost brightness for a vivid effect
+Lighting.EnvironmentDiffuseScale = 1.5 -- Improve light diffusion for a softer glow
+Lighting.EnvironmentSpecularScale = 2 -- Enhance reflective surfaces for realism
+Lighting.ClockTime = 12 -- Sync clock time for better midday lighting
+    end,
+})
+
+local Button_Stunned = MainTab:CreateButton({
+   Name = "Anti Stun",
+   Callback = function()
+      local Con = game:GetService("ReplicatedStorage").Modules.StatusEffects.Stunned
+      if Con then
+         Con:Destroy()
+      else
+         Rayfield:Notify({
+            Title = "Already unstunable",
+            Content = "Your already unstunable. no need to activate it again.",
+            Duration = 3,
+            Image = "shield-off"
+         })
+      end
+   end,
+})
+
+local ItemAura = false
+
+local ITEMAURUAO = MainTab:CreateToggle({
+   Name = "Item Aura",
+   CurrentValue = false,
+   Flag = "ToggleItemAura",
+   Callback = function(Value)
+      ItemAura = Value
+
+      task.spawn(function() -- Runs independently to avoid blocking the toggle function
+         while ItemAura do
+            for _, item in ipairs(workspace.Map.Ingame:GetChildren()) do
+                if item:FindFirstChild("ItemRoot") and item.ItemRoot:FindFirstChild("ProximityPrompt") then
+                    fireproximityprompt(item.ItemRoot.ProximityPrompt)
+                end
+            end
+            task.wait(1)
+         end
+      end)
+   end
+})
+
+
+
+
+local NoteForStamina = STab:CreateParagraph({Title = "Note:", Content = "Might not work on free executors."}) 
+
+local Parahbot = STab:CreateToggle({
+   Name = "Infinite Stamina",
+   CurrentValue = false,
+   Flag = "Toggleinfiuddynitestamina",
+   Callback = function(Value)
+        stam = Value
+        local stamscript = require(game.ReplicatedStorage.Systems.Character.Game.Sprinting)
+        
+        local connection
+        connection = game:GetService("RunService").Heartbeat:Connect(function()
+            if not stam then
+                connection:Disconnect()
+                stamscript.StaminaLossDisabled = nil
+                return
+            end
+            stamscript.StaminaLossDisabled = function() 
+            end
+        end)
+   end,
+})
+
+-- Get the player's PlayerGui to display the GUI on screen
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Create a ScreenGui to hold the ImageButton
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "BobbyScreengui"
+screenGui.Parent = playerGui
+screenGui.ResetOnSpawn = false
+
+-- Create the ImageButton
+local job = Instance.new("ImageButton")
+job.Name = "ToggleButton"
+job.Parent = screenGui
+job.Position = UDim2.new(0.65, 0.3, -0.15, 0)  -- Center the button on the screen
+job.Size = UDim2.new(0, 60, 0, 60)           -- Set button size
+job.BackgroundTransparency = 1                -- Remove any default background
+job.Image = "rbxassetid://105780464700717"         -- Set the initial image (off state)
+job.Draggable = true
+
+
+-- Connect the click event to toggle the value and update the image
+job.MouseButton1Click:Connect(function()
+Rayfield:SetVisibility(true)  -- Update the image to reflect the new state
+end)
+
+local sButton = ETab:CreateButton({
+   Name = "Remove Subspaced effect",
+   Callback = function()
+   local Sub = game:GetService("ReplicatedStorage").Modules.StatusEffects.SurvivorExclusive:FindFirstChild("Subspaced")
+if Sub then
+   Sub:Destroy()
+else
+   Rayfield:Notify({Title = "Its already removed:", Content = "No need to remove it again", Duration = 3, Image = 4483362458})
+end
+   end,
+})
+
+local Glutch = ETab:CreateButton({
+   Name = "Remove Glitched effect",
+   Callback = function()
+   local G = game:GetService("ReplicatedStorage").Modules.StatusEffects.KillerExclusive.Glitched
+if G then
+   G:Destroy()
+else
+   Rayfield:Notify({Title = "Its already removed:", Content = "No need to remove it again", Duration = 3, Image = 4483362458})
+end
+   end,
+})
+
+local BlindnessButton = ETab:CreateButton({
+   Name = "Remove Blindness effect",
+   Callback = function()
+   local blindness = game:GetService("ReplicatedStorage").Modules.StatusEffects:FindFirstChild("Blindness")
+if blindness then
+    blindness:Destroy()
+else
+    Rayfield:Notify({Title = "its Already Removed", Content = "Blindness effect is Already removed, No need to do it again.", Duration = 3, Image = 4483362458})
+end
+   end,
+})
+
+local SlownessButton = ETab:CreateButton({
+    Name = "Remove Slowness effect",
+    Callback = function()
+    local slowness = game:GetService("ReplicatedStorage").Modules.StatusEffects:FindFirstChild("Slowness")
+if slowness then
+game:GetService("ReplicatedStorage").Modules.StatusEffects.Slateskin:Destroy()
+    slowness:Destroy()
+else
+    Rayfield:Notify({Title = "Its Already Removed", Content = "Slowness effect Already Removed, No need to do it again.", Duration = 3, Image = 4483362458})
+end
+    end,
+})
+
+local Button_Nausea = ETab:CreateButton({
+   Name = "Remove Nausea Effect",
+   Callback = function()
+      local Con = game:GetService("ReplicatedStorage").Modules.StatusEffects.Nausea
+      if Con then
+         Con:Destroy()
+      else
+         Rayfield:Notify({
+            Title = "Already Removed",
+            Content = "Nausea effect is already removed.",
+            Duration = 3,
+            Image = 4483362458
+         })
+      end
+   end,
+})
+
+local Button_Confusion = ETab:CreateButton({
+   Name = "Remove Confusion Effect",
+   Callback = function()
+      local Con = game:GetService("ReplicatedStorage").Modules.StatusEffects.Confusion
+      if Con then
+         Con:Destroy()
+      else
+         Rayfield:Notify({
+            Title = "Already Removed",
+            Content = "Confusion effect is already removed.",
+            Duration = 3,
+            Image = 4483362458
+         })
+      end
+   end,
+})
+
+local Toggle = GTab:CreateToggle({
+   Name = "Auto generator Fix",
+   CurrentValue = false,
+   Flag = "AutogeneratorFiCoooollx", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Value)
+   skibdiToggle = Value
+   if skibdiToggle then
+           while skibdiToggle do
+            for i, v in pairs(game.Workspace.Map.Ingame.Map:GetChildren()) do
+                if v.Name == "Generator" then
+                    v:WaitForChild("Remotes"):WaitForChild("RE"):FireServer()
+                end
+            end
+            wait(skibdiSlider)
+            end
+        else 
+        skibdiToggle = false
+        end
+   end,
+})
+
+local SliThingyder = GTab:CreateSlider({
+    Name = "Delay Range",
+    Range = {3, 10}, -- Delay range from 1 to 100 seconds
+    Increment = 0.5,
+    Suffix = "Seconds",
+    CurrentValue = 2.5,
+    Flag = "SliderGeneratorCYcfjiuustom",
+    Callback = function(Value)
+  skibdiSlider =Value
+    end,
+})
+
+local DivideCoolsdiver = GTab:CreateDivider()
+
+local OhMyGodItsAScreenGuiBlahBlahBlahHolyShit
+
+local Toggleitsoconoole = GTab:CreateToggle({
+   Name = "Instant Fix generator (GUI button)",
+   CurrentValue = false,
+   Flag = "Toggleihhgtuhinstan",
+   Callback = function(Value)
+      if Value then
+         -- Create the GUI
+         OhMyGodItsAScreenGuiBlahBlahBlahHolyShit = Instance.new("ScreenGui")
+         local toggleButton = Instance.new("TextButton")
+         local uICorner = Instance.new("UICorner")
+         local uiStroke = Instance.new("UIStroke")
+
+         -- Parent the GUI correctly
+         OhMyGodItsAScreenGuiBlahBlahBlahHolyShit.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+         OhMyGodItsAScreenGuiBlahBlahBlahHolyShit.ResetOnSpawn = false
+         
+         -- Configure button properties
+         toggleButton.Size = UDim2.new(0, 100, 0, 50)
+         toggleButton.Font = Enum.Font.FredokaOne
+         toggleButton.Position = UDim2.new(0.5, -50, 0.8, 0)
+         toggleButton.Text = "Instant fix"
+         toggleButton.BackgroundColor3 = Color3.fromRGB(0, 119, 255)
+         toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+         toggleButton.Parent = OhMyGodItsAScreenGuiBlahBlahBlahHolyShit
+         toggleButton.Draggable = true
+         toggleButton.TextSize = 15
+
+         -- Add rounded corners
+         uICorner.CornerRadius = UDim.new(0, 20)
+         uICorner.Parent = toggleButton
+
+         -- Add button outline
+         uiStroke.Thickness = 2
+         uiStroke.Color = Color3.fromRGB(0, 0, 0)
+         uiStroke.Parent = toggleButton
+         uiStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+         local isCooldown = false
+         local cooldownTime = 2.5
+
+         -- Button hover effect
+         toggleButton.MouseEnter:Connect(function()
+             toggleButton.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
+         end)
+
+         toggleButton.MouseLeave:Connect(function()
+             toggleButton.BackgroundColor3 = Color3.fromRGB(0, 119, 255)
+         end)
+
+         -- Click function with cooldown
+         toggleButton.MouseButton1Click:Connect(function()
+             if not isCooldown then
+                 isCooldown = true
+
+                 -- Perform the action
+                 for _, v in pairs(game.Workspace.Map.Ingame.Map:GetChildren()) do
+                     if v.Name == "Generator" then
+                         v:WaitForChild("Remotes"):WaitForChild("RE"):FireServer()
+                     end
+                 end
+                
+                 -- Cooldown countdown loop fix
+                 local i = cooldownTime
+                 while i > 0 do
+                     toggleButton.Text = string.format("%.1f", i)
+                     task.wait(0.1)
+                     i = i - 0.1
+                 end
+
+                 isCooldown = false
+                 toggleButton.Text = "Instant fix"
+             end
+         end)
+      else
+         if OhMyGodItsAScreenGuiBlahBlahBlahHolyShit then
+             OhMyGodItsAScreenGuiBlahBlahBlahHolyShit:Destroy()
+             OhMyGodItsAScreenGuiBlahBlahBlahHolyShit = nil
+         end
+      end
+   end,
+})
+
+local debounce = false 
+
+local KeybindGenficbutforPxc = GTab:CreateKeybind({
+   Name = "Instant Fix Generator Keybind",
+   CurrentKeybind = "Q",
+   HoldToInteract = false,
+   Flag = "KeybindInstantfixgen",
+   Callback = function()
+       if not debounce then
+           debounce = true  -- Activate cooldown
+           
+           for i, v in pairs(game.Workspace.Map.Ingame.Map:GetChildren()) do
+               if v.Name == "Generator" then
+                   v:WaitForChild("Remotes"):WaitForChild("RE"):FireServer()
+               end
+           end
+           
+           task.wait(2.5)  -- Wait for 2.5 seconds
+           debounce = false  -- Reset cooldown
+       end
+   end,
+})
+
+
+
+local NoteParagraph = ATab:CreateParagraph({Title = "Note:", Content = "if your brain is too small to understand the 'Survivor aimbot' and 'Killer aimbot' so the killer aimbot is aimbot but for killers and survivor aimbot is aimbot but for survivors i made them separate so you can choose."})
+
+local toggleActive = false       -- This flag controls whether the functionality is active
+local connections = {}           -- To store all event connections
+local camlockEnabled = false     -- Whether camlock is currently active
+local killerTarget = nil         -- The current killer target
+
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+-- Prediction factor determining how far ahead (in seconds) to aim.
+local aimPredictionFactor = 0.25
+
+-- New smoothness factor for camera movement interpolation.
+local aimSmoothness = 0.1
+
+-- List of animation IDs to check against.
+local animationIdList = {
+    "rbxassetid://131257799030455",
+    "rbxassetid://87259391926321",
+    "rbxassetid://89448354637442",
+    "rbxassetid://86545133269813",
+    "rbxassetid://86371356500204",
+    "rbxassetid://133491532453922"
+}
+
+local function isAnimationIdInList(animationId)
+    for _, id in ipairs(animationIdList) do
+        if animationId == id then
+            return true
+        end
+    end
+    return false
+end
+
+local function getKillerTarget()
+    for _, killer in ipairs(Workspace.Players.Killers:GetChildren()) do
+        if killer:FindFirstChild("HumanoidRootPart") then
+            return killer
+        end
+    end
+    return nil
+end
+
+local function enableCamlockForDuration()
+    killerTarget = getKillerTarget()
+    if killerTarget then
+        camlockEnabled = true
+        task.delay(2, function()
+            camlockEnabled = false
+            killerTarget = nil
+        end)
+    end
+end
+
+-- This function attaches the AnimationPlayed listener to a character's Humanoid.
+local function attachAnimationLogger(character)
+    local humanoid = character:FindFirstChild("Humanoid") or character:WaitForChild("Humanoid", 5)
+    if humanoid then
+        local animConn = humanoid.AnimationPlayed:Connect(function(animationTrack)
+            if toggleActive and animationTrack.Animation and isAnimationIdInList(animationTrack.Animation.AnimationId) then
+                enableCamlockForDuration()
+            end
+        end)
+        table.insert(connections, animConn)
+    end
+end
+
+local function startToggle()
+    toggleActive = true
+
+    local renderConn = RunService.RenderStepped:Connect(function()
+        if camlockEnabled and killerTarget and killerTarget:FindFirstChild("HumanoidRootPart") then
+            local hrp = killerTarget.HumanoidRootPart
+            local currentPosition = hrp.Position
+            local velocity = hrp.Velocity
+            -- Calculate predicted position based on velocity and our prediction factor.
+            local predictedPosition = currentPosition + (velocity * aimPredictionFactor)
+            
+            -- Get the current camera and smoothly transition its CFrame.
+            local currentCamera = Workspace.CurrentCamera
+            local targetCFrame = CFrame.new(currentCamera.CFrame.Position, predictedPosition)
+            currentCamera.CFrame = currentCamera.CFrame:Lerp(targetCFrame, aimSmoothness)
+        end
+    end)
+    table.insert(connections, renderConn)
+
+    if LocalPlayer.Character then
+        attachAnimationLogger(LocalPlayer.Character)
+    end
+
+    local charAddedConn = LocalPlayer.CharacterAdded:Connect(function(character)
+        attachAnimationLogger(character)
+    end)
+    table.insert(connections, charAddedConn)
+end
+
+local function stopToggle()
+    toggleActive = false
+    camlockEnabled = false
+    killerTarget = nil
+    for _, conn in ipairs(connections) do
+        if conn.Connected then
+            conn:Disconnect()
+        end
+    end
+    connections = {}
+end
+
+-- Creating a toggle with your UI library.
+local AimbotTSrugoggle = ATab:CreateToggle({
+    Name = "Survivor Aimbot",
+    CurrentValue = false,
+    Flag = "ToggleSURGUGFHBIDCWVKO",  -- Added missing comma here.
+    Callback = function(Value)
+        if Value then
+            startToggle()
+        else
+            stopToggle()
+        end
+    end,
+})
+
+local SurvivroAinhotSlider = ATab:CreateSlider({
+   Name = "Survivor's Aimbot Prediction",
+   Range = {0.25, 1},
+   Increment = 0.25,
+   Suffix = "Prediction",
+   CurrentValue = 0.25,
+   Flag = "SliderSuvrivrolrlsider", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Value)
+   aimPredictionFactor = Value
+   end,
+})
+
+-- Creating a slider that updates the prediction factor.
+-- Creating a new slider that controls the smoothness of the camera movement.
+local SmoothnessSlider = ATab:CreateSlider({
+    Name = "Survivor's Aimbot Smoothness",
+    Range = {0.05, 1},  -- You may adjust this range as needed.
+    Increment = 0.05,
+    Suffix = "Smoothness",
+    CurrentValue = 0.1,  -- Default smoothness value.
+    Flag = "CoolSmoothnessFlag",
+    Callback = function(Value)
+        aimSmoothness = Value  -- Update our smoothness factor.
+    end,
+})
+
+local DividerTostopjill = ATab:CreateDivider()
+
+local aimbotEnabled = false         -- Flag for aimbot state
+local connectionRegistry = {}        -- Table to store active connections
+local camlockActive = false          -- Whether camlock is enabled
+local targetPlayer = nil             -- Current target determined by the aimbot
+
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local localPlayer = Players.LocalPlayer
+
+-- Prediction factor (in seconds) determining how far ahead to aim
+local predictionTime = 0.25
+
+-- New smoothness factor for camera movement interpolation.
+local aimSmoothness = 0.1
+
+-- List of tracked animation IDs
+local trackedAnimationIds = {
+    "rbxassetid://121086746534252",
+    "rbxassetid://126355327951215",
+    "rbxassetid://126830014841198",
+    "rbxassetid://18885909645",
+    "rbxassetid://137460487315648",
+    "rbxassetid://139539704434328",
+    "rbxassetid://105458270463374",
+    "rbxassetid://127172483138092",
+    "rbxassetid://86799093901669",
+    "rbxassetid://18885919947",
+    "rbxassetid://124253199259176",
+    "rbxassetid://133336594357903",
+    "rbxassetid://74707328554358",
+    "rbxassetid://86204001129974",
+    "rbxassetid://82113744478546",
+    "rbxassetid://118298475669935",
+    "rbxassetid://140125695162370",
+    "rbxassetid://114620047310688",
+    "rbxassetid://93069721274110",
+    "rbxassetid://116814116277716",
+    "rbxassetid://80277760801310",
+    "rbxassetid://83829782357897"
+}      
+
+local function shouldTrackAnimation(animationId)
+    for _, id in ipairs(trackedAnimationIds) do
+        if animationId == id then
+            return true
+        end
+    end
+    return false
+end
+
+local function getNearestOpponent()
+    local closestOpponent = nil
+    local minDistance = math.huge
+    local localPosition = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") and localPlayer.Character.HumanoidRootPart.Position
+
+    if localPosition then
+        for _, otherPlayer in ipairs(Players:GetPlayers()) do
+            if otherPlayer ~= localPlayer and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local opponentPosition = otherPlayer.Character.HumanoidRootPart.Position
+                local distance = (opponentPosition - localPosition).Magnitude
+                if distance < minDistance then
+                    closestOpponent = otherPlayer
+                    minDistance = distance
+                end
+            end
+        end
+    end
+    return closestOpponent
+end
+
+local function enableCamlockForTarget()
+    targetPlayer = getNearestOpponent()
+    if targetPlayer then
+        camlockActive = true
+        task.delay(2, function()
+            camlockActive = false
+            targetPlayer = nil
+        end)
+    end
+end
+
+local function registerAnimationEvent(character)
+id = character:WaitForChild("Humanoid")
+    if humanoid then
+        local animEvent = humanoid.AnimationPlayed:Connect(function(animationTrack)
+            if aimbotEnabled and animationTrack.Animation and shouldTrackAnimation(animationTrack.Animation.AnimationId) then
+                enableCamlockForTarget()
+            end
+        end)
+        table.insert(connectionRegistry, animEvent)
+    end
+end
+
+local function activateAimbot()
+    aimbotEnabled = true
+
+    local renderConnection = RunService.RenderStepped:Connect(function()
+        if camlockActive and targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp = targetPlayer.Character.HumanoidRootPart
+            local currentPosition = hrp.Position
+            local velocity = hrp.Velocity
+            -- Calculate the predicted position based on a linear, constant-velocity assumption.
+            local predictedPosition = currentPosition + (velocity * predictionTime)
+            
+            -- Smoothly interpolate the camera's CFrame towards the predicted position.
+            local currentCamera = Workspace.CurrentCamera
+            local targetCFrame = CFrame.new(currentCamera.CFrame.Position, predictedPosition)
+            currentCamera.CFrame = currentCamera.CFrame:Lerp(targetCFrame, aimSmoothness)
+        end
+    end)
+    table.insert(connectionRegistry, renderConnection)
+
+    if localPlayer.Character then
+        registerAnimationEvent(localPlayer.Character)
+    end
+
+    local characterAddedHandler = localPlayer.CharacterAdded:Connect(function(character)
+        registerAnimationEvent(character)
+    end)
+    table.insert(connectionRegistry, characterAddedHandler)
+end
+
+local function deactivateAimbot()
+    aimbotEnabled = false
+    camlockActive = false
+    targetPlayer = nil
+
+    for _, conn in ipairs(connectionRegistry) do
+        if conn.Connected then
+            conn:Disconnect()
+        end
+    end
+    connectionRegistry = {}
+end
+
+local aimbotKillerToggle = ATab:CreateToggle({
+    Name = "Killer Aimbot",
+    CurrentValue = false,
+    Flag = "SliderYgdyhbujkillerrrrS",
+    Callback = function(isEnabled)
+        if isEnabled then
+            activateAimbot()
+        else
+            deactivateAimbot()
+        end
+    end,
+})
+
+local SlideForkillerbutr = ATab:CreateSlider({
+    Name = "Killer's Aimbot Prediction",
+    Range = {0.25, 1},
+    Increment = 0.25,
+    Suffix = "Prediction",
+    CurrentValue = 0.25,  -- Default lies within the slider's range.
+    Flag = "SliderSyxfyr",
+    Callback = function(Value)
+        predictionTime = Value  -- Update the prediction time as the slider changes.
+    end,
+})
+
+local KillerSmoothnessSlider = ATab:CreateSlider({
+    Name = "Killer's Aimbot Smoothness",
+    Range = {0.05, 1},  -- Adjustable range for smoothness.
+    Increment = 0.05,
+    Suffix = "Smoothness",
+    CurrentValue = 0.1, -- Default smoothness value.
+    Flag = "KillerSmoothnessFlag",
+    Callback = function(Value)
+        aimSmoothness = Value  -- Update the smoothness factor.
+    end,
+})
+
+local ForPredParagraph = ATab:CreateParagraph({Title = "Note:", Content = "Prediction from 0.25-0.5 is recommended."})
+
+local ForOtherDivider = ATab:CreateDivider()
+
+local Button = ATab:CreateButton({
+   Name = "Dusekarr Switchable Aimbot",
+   Callback = function()
+ ------------------------------
+-- Setup GUI & Variables
+------------------------------
+
+local player = game.Players.LocalPlayer
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+local toggleButton = Instance.new("TextButton")
+toggleButton.Parent = screenGui
+toggleButton.Size = UDim2.new(0, 200, 0, 50)
+toggleButton.Position = UDim2.new(0.5, -100, 0.1, 0)
+toggleButton.Text = "Target: Survivors"
+toggleButton.BackgroundColor3 = Color3.fromRGB(34, 139, 34)  -- Green for Survivors
+toggleButton.TextColor3 = Color3.new(1, 1, 1)
+toggleButton.Font = Enum.Font.SourceSansBold
+toggleButton.TextSize = 24
+toggleButton.Draggable = true
+
+-- Global mode variable; can be "Survivor" or "Killer".
+local currentMode = "Survivor"
+
+-- Prediction setup: how many seconds ahead to predict target movement.
+local predictionTime = 0.25  -- Adjust to fine-tune prediction (in seconds)
+
+------------------------------
+-- Services & References
+------------------------------
+
+local runService = game:GetService("RunService")
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local animator = humanoid:FindFirstChildOfClass("Animator") or humanoid:WaitForChild("Animator")
+
+------------------------------
+-- Utility Functions
+------------------------------
+
+local function getCenter()
+	local cam = workspace.CurrentCamera
+	return Vector2.new(cam.ViewportSize.X / 2, cam.ViewportSize.Y / 2)
+end
+
+-- Finds the closest other player (for Survivor mode) based on center-of-screen.
+local function getClosestPlayer()
+	local closestPlayer = nil
+	local closestDistance = math.huge
+	local camera = workspace.CurrentCamera
+	local center = getCenter()
+	
+	for _, v in pairs(game.Players:GetPlayers()) do
+		if v ~= player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+			local screenPosition, onScreen = camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
+			if onScreen then
+				local distance = (center - Vector2.new(screenPosition.X, screenPosition.Y)).magnitude
+				if distance < closestDistance then
+					closestDistance = distance
+					closestPlayer = v
+				end
+			end
+		end
+	end
+	return closestPlayer
+end
+
+-- Finds the closest killer (from the Players/Killers folder) based on center-of-screen.
+local function getTargetObject()
+	local killersFolder = workspace:WaitForChild("Players"):WaitForChild("Killers")
+	local closestObject = nil
+	local closestDistance = math.huge
+	local camera = workspace.CurrentCamera
+	local center = getCenter()
+	
+	for _, v in pairs(killersFolder:GetChildren()) do
+		if v:IsA("Model") and v:FindFirstChild("HumanoidRootPart") then
+			local screenPosition = camera:WorldToScreenPoint(v.HumanoidRootPart.Position)
+			local distance = (center - Vector2.new(screenPosition.X, screenPosition.Y)).magnitude
+			if distance < closestDistance then
+				closestDistance = distance
+				closestObject = v
+			end
+		end
+	end
+	return closestObject
+end
+
+------------------------------
+-- Camera Lock Functions
+------------------------------
+
+local survivorConnection = nil
+local killerConnection = nil
+
+-- Applies Survivor-mode camera lock with prediction.
+local function applySurvivorCamLock()
+	-- Disconnect any existing survivor connection.
+	if survivorConnection then
+		survivorConnection:Disconnect()
+		survivorConnection = nil
+	end
+	
+	local targetPlayer = getClosestPlayer()
+	if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+		survivorConnection = runService.RenderStepped:Connect(function()
+			if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+				local hrp = targetPlayer.Character.HumanoidRootPart
+				-- Predict future position: current position + velocity * predictionTime.
+				local predictedPos = hrp.Position + (hrp.Velocity * predictionTime)
+				workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, predictedPos)
+			end
+		end)
+		-- Automatically stop after 2 seconds.
+		task.delay(2, function()
+			if survivorConnection then
+				survivorConnection:Disconnect()
+				survivorConnection = nil
+			end
+		end)
+	end
+end
+
+-- Applies Killer-mode camera lock with prediction.
+local function applyKillerCamLock()
+	-- Disconnect any existing killer connection.
+	if killerConnection then
+		killerConnection:Disconnect()
+		killerConnection = nil
+	end
+	
+	local targetObject = getTargetObject()
+	if targetObject and targetObject:FindFirstChild("HumanoidRootPart") then
+		killerConnection = runService.RenderStepped:Connect(function()
+			if targetObject and targetObject:FindFirstChild("HumanoidRootPart") then
+				local hrp = targetObject.HumanoidRootPart
+				local predictedPos = hrp.Position + (hrp.Velocity * predictionTime)
+				workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, predictedPos)
+			end
+		end)
+		-- Automatically stop after 2 seconds.
+		task.delay(2, function()
+			if killerConnection then
+				killerConnection:Disconnect()
+				killerConnection = nil
+			end
+		end)
+	end
+end
+
+-- Applies camera lock based on the current mode.
+local function applyCameraLock()
+	-- Clear any previous connections.
+	if survivorConnection then
+		survivorConnection:Disconnect()
+		survivorConnection = nil
+	end
+	if killerConnection then
+		killerConnection:Disconnect()
+		killerConnection = nil
+	end
+	
+	if currentMode == "Survivor" then
+		applySurvivorCamLock()
+	else
+		applyKillerCamLock()
+	end
+end
+
+------------------------------
+-- GUI Button Control
+------------------------------
+
+toggleButton.MouseButton1Click:Connect(function()
+	-- Toggle the mode manually without triggering camera lock.
+	if currentMode == "Survivor" then
+		currentMode = "Killer"
+		toggleButton.Text = "Target: Killer"
+		toggleButton.BackgroundColor3 = Color3.fromRGB(220, 0, 0)  -- Crimson
+	else
+		currentMode = "Survivor"
+		toggleButton.Text = "Target: Survivors"
+		toggleButton.BackgroundColor3 = Color3.fromRGB(34, 139, 34)  -- Green
+	end
+	-- The camera lock will only occur when your animation plays.
+end)
+
+------------------------------
+-- Animation Trigger
+------------------------------
+
+animator.AnimationPlayed:Connect(function(track)
+	-- When the specified animation plays, trigger camera lock using the current mode.
+	if track.Animation and track.Animation.AnimationId == "rbxassetid://77894750279891" then
+		applyCameraLock()
+	end
+end)
+   end,
+})
+
+local AutoSection = ATab:CreateSection("Auto / Experimental")
+
+local SToggle = false
+local proximityConnection -- Declare the connection variable globally for better management.
+
+local AutocoinflipButton = ATab:CreateButton({
+   Name = "Auto chance coinflip",
+   Callback = function()
+       local Players = game:GetService("Players")
+       local localPlayer = Players.LocalPlayer
+       local args = {
+           [1] = "UseActorAbility",
+           [2] = "CoinFlip"
+       }
+       
+       -- Wait for the PlayerGui and relevant UI elements
+       local playerGui = localPlayer:WaitForChild("PlayerGui")
+       local mainUI = playerGui:WaitForChild("MainUI")
+       local abilityContainer = mainUI:WaitForChild("AbilityContainer")
+       local shoot = abilityContainer:WaitForChild("Shoot")
+       local charges = shoot:WaitForChild("Charges")
+
+       -- Loop until the charges.Text equals Number
+       while tonumber(charges.Text) ~= Number do
+           game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
+           wait(2) -- wait 2 seconds before checking again
+       end
+   end,
+})
+
+local AutocoinflipfotSlider = ATab:CreateSlider({
+   Name = "Choose the range",
+   Range = {1, 3},
+   Increment = 1,
+   Suffix = "Coinflips",
+   CurrentValue = 3,
+   Flag = "SliderCoinflip", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(state)
+    Number = state
+   end,
+})
+
+local AutoTabDivider = ATab:CreateDivider()
+
+local ForAutoPsoplParagraph = ATab:CreateParagraph({Title = "Note:", Content = "Don't use auto Slash killer when your the killer, it will cuase you to auto click (but if your c00lkid then nah)"})
+
+local ToButAutoshedggle = ATab:CreateToggle({
+    Name = "Auto shedletsky slash killer",
+    CurrentValue = false,
+    Flag = "ToggleAutoSlash",
+    Callback = function(Value)
+        SToggle = Value
+
+        if SToggle then
+            while SToggle do
+                local args = {
+                    [1] = "UseActorAbility",
+                    [2] = "Slash"
+                }
+                local PlayersGroup = game.Workspace:WaitForChild("Players")
+                local RunService = game:GetService("RunService")
+                local localPlayer = game.Players.LocalPlayer
+
+                local function checkProximity()
+                    local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
+                    local localRoot = character:WaitForChild("HumanoidRootPart")
+                    
+                    local killersGroup = PlayersGroup:FindFirstChild("Killers")
+                    if killersGroup then
+                        for _, killer in ipairs(killersGroup:GetChildren()) do
+                            if killer:IsA("Model") then
+                                local killerRoot = killer:FindFirstChild("HumanoidRootPart")
+                                if killerRoot then
+                                    local distance = (localRoot.Position - killerRoot.Position).Magnitude
+                                    if distance <= 10 then
+                                        game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+
+                local function resetScript()
+                    if proximityConnection then
+                        proximityConnection:Disconnect()
+                    end
+
+                    proximityConnection = RunService.Heartbeat:Connect(checkProximity)
+                end
+
+                localPlayer.CharacterAdded:Connect(function()
+                    resetScript()
+                end)
+
+                resetScript()
+                task.wait(0.5) -- Reduced delay for better responsiveness.
+            end
+        else
+            if proximityConnection then
+                proximityConnection:Disconnect()
+                proximityConnection = nil
+            end
+            SToggle = false
+        end
+    end,
+}) 
+
+local pizzaEnabled = false
+
+local TogglAutoTpToPizzae = ATab:CreateToggle({
+    Name = "Auto Tp to Pizza",
+    CurrentValue = false,
+    Flag = "PizzaTeleportToggle",
+    Callback = function(Value)
+        pizzaEnabled = Value
+
+        local PlayersService = game:GetService("Players")
+        local localPlayer = PlayersService.LocalPlayer
+        local IngameFolder = workspace.Map.Ingame
+        local targetName = "Pizza"
+        local teleportDuration = 0.5
+        local waitBeforeTeleport = 1
+
+        local function teleportToTarget(target)
+            if not target then
+                return
+            end
+            
+            local character = localPlayer.Character
+            if not character then
+                return
+            end
+
+            local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+            if not humanoidRootPart then
+                return
+            end
+
+            local previousPosition = humanoidRootPart.Position
+
+            wait(waitBeforeTeleport)
+
+            if target and target:IsDescendantOf(IngameFolder) then
+                humanoidRootPart.CFrame = target.CFrame
+            end
+
+            wait(teleportDuration)
+
+            humanoidRootPart.CFrame = CFrame.new(previousPosition)
+        end
+
+        local function checkAndTeleport()
+            while pizzaEnabled do
+                local target = IngameFolder:FindFirstChild(targetName)
+                if target then
+                    teleportToTarget(target)
+                end
+                wait(1)
+            end
+        end
+        
+        if pizzaEnabled then
+            checkAndTeleport()
+        end
+
+        IngameFolder.ChildAdded:Connect(function(child)
+            if child.Name == targetName and pizzaEnabled then
+                checkAndTeleport()
+            end
+        end)
+    end,
+})
+local connectionPOP
+local DIS = 5
+local AutoBlockToggle = ATab:CreateToggle({
+   Name = "Auto Block as guest (experimental, Basically bad)",
+   CurrentValue = false,
+   Flag = "ToggleAutoBlock", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Value)
+ if Value then
+local runService = game:GetService("RunService")
+
+local args = {
+	"UseActorAbility",
+	"Block"
+}
+
+local function checkDistance()
+    for _, killer in ipairs(workspace.Players.Killers:GetChildren()) do
+        if killer:IsA("Model") and killer.PrimaryPart then
+            local distance = (killer.PrimaryPart.Position - game.Players.LocalPlayer.Character.PrimaryPart.Position).Magnitude
+            if distance <= DIS then
+                game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
+            end
+        end
+    end
+end
+
+connectionPOP = runService.Heartbeat:Connect(checkDistance)
+ else
+connectionPOP:Disconnect()
+ end
+   end,
+})
+
+local GuestblockSlider = ATab:CreateSlider({
+   Name = "Guest block Distance",
+   Range = {5, 30},
+   Increment = 5,
+   Suffix = "Studs",
+   CurrentValue = 10,
+   Flag = "GuestblockSlider", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Value)
+   DIS = Value
+   end,
+})
+
+
+
+local PopUpToggle = ATab:CreateToggle({
+	Name = "Auto 1x1x1x1 Popup",
+	CurrentValue = false,
+	Flag = "Toggle1x1Popupboi", -- Ensure every element has a different flag if you're using configuration saving to avoid overlaps
+	Callback = function(Value)
+		local VIM = game:GetService("VirtualInputManager")
+		local running = true
+		
+		local function runScript()
+			while running do
+				local player = game:GetService("Players").LocalPlayer
+				local popups = player.PlayerGui.TemporaryUI:GetChildren()
+
+				for _, i in ipairs(popups) do
+					if i.Name == "1x1x1x1Popup" then
+						local centerX = i.AbsolutePosition.X + (i.AbsoluteSize.X / 2)
+						local centerY = i.AbsolutePosition.Y + (i.AbsoluteSize.Y / 2) + 50
+						VIM:SendMouseButtonEvent(
+							centerX,
+							centerY,
+							Enum.UserInputType.MouseButton1.Value,
+							true,
+							player.PlayerGui,
+							1
+						)
+						VIM:SendMouseButtonEvent(
+							centerX,
+							centerY,
+							Enum.UserInputType.MouseButton1.Value,
+							false,
+							player.PlayerGui,
+							1
+						)
+					end 
+				end
+				task.wait(0.1)
+			end
+		end
+		
+		if Value then
+			running = true
+			spawn(runScript)
+		else
+			running = false
+		end
+	end,
+})
+
+local connectionAdded, connectionRemoved
+
+local AutoGhostBurgerToggle = ATab:CreateToggle({
+    Name = "Auto Ghostburger At lms",
+    CurrentValue = false,
+    Flag = "ToggleAutoGhostBurger", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+    Callback = function(Value)
+        local args = {
+            [1] = "UseActorAbility",
+            [2] = "Ghostburger"
+        }
+        local targetFolder = workspace.Players:FindFirstChild("Survivors")
+
+        if Value then
+            -- Enable the functionality
+            local function checkChildren()
+                if targetFolder and #targetFolder:GetChildren() == 1 then
+                    game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
+                end
+            end
+
+            if targetFolder then
+                connectionAdded = targetFolder.ChildAdded:Connect(checkChildren)
+                connectionRemoved = targetFolder.ChildRemoved:Connect(checkChildren)
+            end
+
+            -- Initial check
+            if targetFolder then
+                checkChildren()
+            end
+        else
+            -- Disable the functionality
+            if connectionAdded then
+                connectionAdded:Disconnect()
+                connectionAdded = nil
+            end
+            if connectionRemoved then
+                connectionRemoved:Disconnect()
+                connectionRemoved = nil
+            end
+        end
+    end,
+})
+
+
+
+local function bobity(THIS, THAT)
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+local screenGui = playerGui:FindFirstChild("ScreenGui")
+
+if not screenGui then
+    screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "ScreenGui"
+    screenGui.Parent = playerGui
+end
+
+local imageButton = Instance.new("ImageButton")
+imageButton.Size = UDim2.new(0, 100, 0, 100) -- Adjust the size as needed
+imageButton.Position = UDim2.new(0.5, -50, 0.5, -50) -- Centered on the screen
+imageButton.Image = THIS -- Replace with your image asset ID
+imageButton.BackgroundTransparency = 1 -- Make the background fully transparent
+imageButton.Parent = screenGui
+
+local animation = Instance.new("Animation")
+animation.AnimationId = THAT
+
+local character = player.Character or player.CharacterAdded:Wait()
+
+local function playAnimation()
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        local animationTrack = humanoid:LoadAnimation(animation)
+        animationTrack:Play()
+    else
+        warn("Skibdi")
+    end
+end
+
+imageButton.MouseButton1Click:Connect(playAnimation)
+
+local UserInputService = game:GetService("UserInputService")
+
+local dragging
+local dragInput
+local dragStart
+local startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    imageButton.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+imageButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = imageButton.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+imageButton.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
+end
+
+local FakePunchButton = FunTab:CreateButton({
+   Name = "Fake Punch Button",
+   Callback = function()
+    bobity("rbxassetid://110895402653848", "rbxassetid://87259391926321")
+   end,
+})
+
+local FakeBlockButton = FunTab:CreateButton({
+   Name = "Fake block button",
+   Callback = function()
+   bobity("rbxassetid://85125497005042", "rbxassetid://72722244508749")
+   end,
+})
+
+local FlipSection = FunTab:CreateSection("flip")
+
+local BackflipButton = FunTab:CreateButton({
+   Name = "Backflip Button",
+   Callback = function()
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+local screenGui = playerGui:FindFirstChild("ScreenGui")
+
+if not screenGui then
+    screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "ScreenGui"
+    screenGui.Parent = playerGui
+end
+
+local imageButton = Instance.new("ImageButton")
+imageButton.Size = UDim2.new(0, 100, 0, 100) 
+imageButton.Position = UDim2.new(0.5, -50, 0.5, -50)
+imageButton.Image = "rbxassetid://108983136200755" -- Replace with your image asset ID
+imageButton.BackgroundTransparency = 1
+imageButton.Parent = screenGui
+
+imageButton.MouseButton1Click:Connect(function()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    local humanoid = character:WaitForChild("Humanoid")
+
+    humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, false)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.Running, false)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
+
+    local function performBackflip()
+        local duration = 0.45
+        local steps = 120
+        local startCFrame = humanoidRootPart.CFrame
+        local backwardVector = -startCFrame.LookVector
+        local upVector = Vector3.new(0, 1, 0)
+
+        task.spawn(function()
+            local startTime = tick()
+            for i = 1, steps do
+                local t = i / steps
+                local height = 4 * (t - t ^ 2) * 10
+                local nextPos = startCFrame.Position + backwardVector * (35 * t) + upVector * height
+                local rotation = startCFrame.Rotation * CFrame.Angles(-math.rad(i * (360 / steps)), 0, 0)
+
+                humanoidRootPart.CFrame = CFrame.new(nextPos) * rotation
+                local elapsedTime = tick() - startTime
+                local expectedTime = (duration / steps) * i
+                local waitTime = expectedTime - elapsedTime
+                if waitTime > 0 then
+                    task.wait(waitTime)
+                end
+            end
+
+            humanoidRootPart.CFrame = CFrame.new(startCFrame.Position + backwardVector * 35) * startCFrame.Rotation
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, true)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Running, true)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
+            humanoid:ChangeState(Enum.HumanoidStateType.Running)
+        end)
+    end
+
+    performBackflip()
+end)
+
+local UserInputService = game:GetService("UserInputService")
+
+local dragging, dragInput, dragStart, startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    imageButton.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+imageButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = imageButton.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+imageButton.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
+   end,
+})
+
+local FrontflipButton = FunTab:CreateButton({
+   Name = "FrontFlip Button",
+   Callback = function()
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+local screenGui = playerGui:FindFirstChild("ScreenGui")
+
+if not screenGui then
+    screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "ScreenGui"
+    screenGui.Parent = playerGui
+end
+
+local imageButton = Instance.new("ImageButton")
+imageButton.Size = UDim2.new(0, 100, 0, 100) 
+imageButton.Position = UDim2.new(0.5, -50, 0.5, -50)
+imageButton.Image = "rbxassetid://106469685305878" -- Replace with your image asset ID
+imageButton.BackgroundTransparency = 1
+imageButton.Parent = screenGui
+
+imageButton.MouseButton1Click:Connect(function()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    local humanoid = character:WaitForChild("Humanoid")
+
+    humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, false)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.Running, false)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
+
+    local function performBackflip()
+        local duration = 0.45
+        local steps = 120
+        local startCFrame = humanoidRootPart.CFrame
+        local forwardVector = startCFrame.LookVector
+        local upVector = Vector3.new(0, 1, 0)
+
+        task.spawn(function()
+            local startTime = tick()
+            for i = 1, steps do
+                local t = i / steps
+                local height = 4 * (t - t ^ 2) * 10
+                local nextPos = startCFrame.Position + forwardVector * (35 * t) + upVector * height
+                local rotation = startCFrame.Rotation * CFrame.Angles(-math.rad(i * (360 / steps)), 0, 0)
+
+                humanoidRootPart.CFrame = CFrame.new(nextPos) * rotation
+                local elapsedTime = tick() - startTime
+                local expectedTime = (duration / steps) * i
+                local waitTime = expectedTime - elapsedTime
+                if waitTime > 0 then
+                    task.wait(waitTime)
+                end
+            end
+
+            humanoidRootPart.CFrame = CFrame.new(startCFrame.Position + forwardVector * 35) * startCFrame.Rotation
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, true)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Running, true)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
+            humanoid:ChangeState(Enum.HumanoidStateType.Running)
+        end)
+    end
+
+    performBackflip()
+end)
+
+local UserInputService = game:GetService("UserInputService")
+
+local dragging, dragInput, dragStart, startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    imageButton.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+imageButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = imageButton.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+imageButton.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
+   end,
+})
+
+local FrontflipKeybind = FunTab:CreateKeybind({
+   Name = "Frontflip Keybind",
+   CurrentKeybind = "P",
+   HoldToInteract = false,
+   Flag = "KeybindFrontflip", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function()
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+local humanoid = character:WaitForChild("Humanoid")
+
+humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, false)
+humanoid:SetStateEnabled(Enum.HumanoidStateType.Running, false)
+humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
+
+local function performBackflip()
+    local duration = 0.45
+    local steps = 120
+    local startCFrame = humanoidRootPart.CFrame
+    local forwardVector = startCFrame.LookVector
+    local upVector = Vector3.new(0, 1, 0)
+
+    task.spawn(function()
+        local startTime = tick()
+        for i = 1, steps do
+            local t = i / steps
+            local height = 4 * (t - t ^ 2) * 10
+            local nextPos = startCFrame.Position + forwardVector * (35 * t) + upVector * height
+            local rotation = startCFrame.Rotation * CFrame.Angles(-math.rad(i * (360 / steps)), 0, 0)
+
+            humanoidRootPart.CFrame = CFrame.new(nextPos) * rotation
+            local elapsedTime = tick() - startTime
+            local expectedTime = (duration / steps) * i
+            local waitTime = expectedTime - elapsedTime
+            if waitTime > 0 then
+                task.wait(waitTime)
+            end
+        end
+
+        humanoidRootPart.CFrame = CFrame.new(startCFrame.Position + forwardVector * 35) * startCFrame.Rotation
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, true)
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Running, true)
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
+        humanoid:ChangeState(Enum.HumanoidStateType.Running)
+    end)
+end
+
+performBackflip()
+   end,
+})
+
+local BackflipKeybind = FunTab:CreateKeybind({
+   Name = "Backflip Keybind",
+   CurrentKeybind = "L",
+   HoldToInteract = false,
+   Flag = "KeybindBaxlflip", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function()
+local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    local humanoid = character:WaitForChild("Humanoid")
+
+    humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, false)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.Running, false)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
+
+    local function performBackflip()
+        local duration = 0.45
+        local steps = 120
+        local startCFrame = humanoidRootPart.CFrame
+        local backwardVector = -startCFrame.LookVector
+        local upVector = Vector3.new(0, 1, 0)
+
+        task.spawn(function()
+            local startTime = tick()
+            for i = 1, steps do
+                local t = i / steps
+                local height = 4 * (t - t ^ 2) * 10
+                local nextPos = startCFrame.Position + backwardVector * (35 * t) + upVector * height
+                local rotation = startCFrame.Rotation * CFrame.Angles(-math.rad(i * (360 / steps)), 0, 0)
+
+                humanoidRootPart.CFrame = CFrame.new(nextPos) * rotation
+                local elapsedTime = tick() - startTime
+                local expectedTime = (duration / steps) * i
+                local waitTime = expectedTime - elapsedTime
+                if waitTime > 0 then
+                    task.wait(waitTime)
+                end
+            end
+
+            humanoidRootPart.CFrame = CFrame.new(startCFrame.Position + backwardVector * 35) * startCFrame.Rotation
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, true)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Running, true)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
+            humanoid:ChangeState(Enum.HumanoidStateType.Running)
+        end)
+    end
+
+    performBackflip()
+
+local UserInputService = game:GetService("UserInputService")
+
+local dragging, dragInput, dragStart, startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    imageButton.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+imageButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = imageButton.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+imageButton.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
+   end,
+})
+
+local FeAnimSection = FunTab:CreateSection("Fe Animations")
+
+local animationTrack
+
+local MasterBaitonToggle = FunTab:CreateToggle({
+    Name = "Masterbait",
+    CurrentValue = false,
+    Flag = "MasterbaitToggle",
+    Callback = function(Value)
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+
+        if humanoid then
+            if Value then
+                if not animationTrack or not animationTrack.IsPlaying then
+                    local animation = Instance.new("Animation")
+                    animation.AnimationId = "rbxassetid://72042024"
+                    animationTrack = humanoid:LoadAnimation(animation)
+                    animationTrack.Looped = true
+                    animationTrack:Play()
+                end
+            else
+                if animationTrack and animationTrack.IsPlaying then
+                    animationTrack:Stop()
+                end
+            end
+        end
+    end,
+}) 
+
+local ArmsoutToggle = FunTab:CreateToggle({
+    Name = "Arms-out Spin",
+    CurrentValue = false,
+    Flag = "ArmsOutSpinToggle",
+    Callback = function(Value)
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+
+        if humanoid then
+            if Value then
+                if not animationTrack or not animationTrack.IsPlaying then
+                    local animation = Instance.new("Animation")
+                    animation.AnimationId = "rbxassetid://235542946"
+                    animationTrack = humanoid:LoadAnimation(animation)
+                    animationTrack:Play()
+                end
+            else
+                if animationTrack and animationTrack.IsPlaying then
+                    animationTrack:Stop()
+                end
+            end
+        end
+    end,
+}) 
+
+local ApinninghandsToggle = FunTab:CreateToggle({
+    Name = "Spinning Hands",
+    CurrentValue = false,
+    Flag = "SpinningHandsToggle",
+    Callback = function(Value)
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+
+        if humanoid then
+            if Value then
+                if not animationTrack or not animationTrack.IsPlaying then
+                    local animation = Instance.new("Animation")
+                    animation.AnimationId = "rbxassetid://259438880"
+                    animationTrack = humanoid:LoadAnimation(animation)
+                    animationTrack.Looped = true
+                    animationTrack:Play()
+                end
+            else
+                if animationTrack and animationTrack.IsPlaying then
+                    animationTrack:Stop()
+                end
+            end
+        end
+    end,
+}) 
+
+local JumpingjacksToggle = FunTab:CreateToggle({
+    Name = "Jumping Jacks",
+    CurrentValue = false,
+    Flag = "JumpingJacksToggle",
+    Callback = function(Value)
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+
+        if humanoid then
+            if Value then
+                if not animationTrack or not animationTrack.IsPlaying then
+                    local animation = Instance.new("Animation")
+                    animation.AnimationId = "rbxassetid://429681631"
+                    animationTrack = humanoid:LoadAnimation(animation)
+                    animationTrack.Looped = true
+                    animationTrack:Play()
+                end
+            else
+                if animationTrack and animationTrack.IsPlaying then
+                    animationTrack:Stop()
+                end
+            end
+        end
+    end,
+})
+
+local SlideButton = FunTab:CreateButton({
+   Name = "slide button",
+   Callback = function()
+   local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+local screenGui = playerGui:FindFirstChild("ScreenGui")
+
+if not screenGui then
+    screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "ScreenGui"
+    screenGui.Parent = playerGui
+end
+
+local B = Instance.new("ImageButton")
+B.Size = UDim2.new(0, 100, 0, 100)
+B.Position = UDim2.new(0.5, -50, 0.5, -50)
+B.Image = "rbxassetid://110777561976075"
+B.BackgroundTransparency = 1
+B.Parent = screenGui
+B.Draggable = true
+
+B.MouseButton1Click:Connect(function()
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    local humanoid = character:WaitForChild("Humanoid")
+
+    local slideAnimation = Instance.new("Animation")
+    slideAnimation.AnimationId = "rbxassetid://182749109"
+    local slideAnimTrack = humanoid:LoadAnimation(slideAnimation)
+    slideAnimTrack:Play()
+
+    local TweenService = game:GetService("TweenService")
+    local sD = 20  
+    local sDun = 0.8 
+
+    local startCFrame = humanoidRootPart.CFrame
+    local endCFrame = startCFrame * CFrame.new(0, 0, -sD)
+
+    local tweenInfo = TweenInfo.new(
+        sDun,
+        Enum.EasingStyle.Sine,
+        Enum.EasingDirection.Out
+    )
+
+    local tween = TweenService:Create(humanoidRootPart, tweenInfo, {CFrame = endCFrame})
+
+    tween:Play()
+    tween.Completed:Connect(function()
+        slideAnimTrack:Stop()
+    end)
+end)
+   end,
+})
+
+local PackSection = FunTab:CreateSection("Animation Packs")
+
+local function setupAnimations(idleAnimId, mediumSpeedAnimId, highSpeedAnimId)
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:WaitForChild("Humanoid")
+    local rootPart = character:WaitForChild("HumanoidRootPart")
+    local animator = humanoid:WaitForChild("Animator")
+
+    -- Function to create and load an animation
+    local function createAnimation(animId)
+        local animation = Instance.new("Animation")
+        animation.AnimationId = animId
+        return animator:LoadAnimation(animation)
+    end
+
+    -- Load animations
+    local idleTrack = createAnimation(idleAnimId)
+    local mediumSpeedTrack = createAnimation(mediumSpeedAnimId)
+    local highSpeedTrack = createAnimation(highSpeedAnimId)
+
+    -- Local function to update animation based on speed
+    local function updateAnimation()
+        local speed = rootPart.Velocity.Magnitude
+        if speed < 1 then
+            if not idleTrack.IsPlaying then
+                idleTrack:Play()
+                mediumSpeedTrack:Stop(0.2)
+                highSpeedTrack:Stop(0.2)
+            end
+        elseif speed >= 20 then
+            if not highSpeedTrack.IsPlaying then
+                highSpeedTrack:Play()
+                idleTrack:Stop(0.2)
+                mediumSpeedTrack:Stop(0.2)
+            end
+        else
+            if not mediumSpeedTrack.IsPlaying then
+                mediumSpeedTrack:Play()
+                idleTrack:Stop(0.2)
+                highSpeedTrack:Stop(0.2)
+            end
+        end
+    end
+
+    -- Monitor player's movement
+    game:GetService("RunService").Heartbeat:Connect(updateAnimation)
+end
+
+local TwoButton = FunTab:CreateButton({
+   Name = "2017 animation Pack",
+   Callback = function()
+setupAnimations("rbxassetid://124622205682529", "rbxassetid://99127941563341", "rbxassetid://99159420513149")
+   end,
+})
+
+local PButton = FunTab:CreateButton({
+   Name = "Stalker animation pack",
+   Callback = function()
+setupAnimations("rbxassetid://135419935358802", "rbxassetid://95469909855529", "rbxassetid://109671225388655")
+   end,
+})
+
+local ChillButton = FunTab:CreateButton({
+   Name = "Chill animation pack",
+   Callback = function()
+   setupAnimations("rbxassetid://132811450080149", "rbxassetid://90163253241107", "rbxassetid://96194626828153")
+end,
+})
+
+local johnnysinsButton = FunTab:CreateButton({
+   Name = "John doe's animation pack",
+   Callback = function()
+   setupAnimations("rbxassetid://105880087711722", "rbxassetid://81193817424328", "rbxassetid://132653655520682")
+end,
+})
+
+local CoolkidButton = FunTab:CreateButton({
+   Name = "C00lkid's animation pack",
+   Callback = function()
+   setupAnimations("rbxassetid://18885903667", "rbxassetid://18885906143", "rbxassetid://96571077893813")
+end,
+})
+
+local NoliButton = FunTab:CreateButton({
+   Name = "Noli's animation pack",
+   Callback = function()
+   setupAnimations("rbxassetid://83465205704188", "rbxassetid://116353529220765", "rbxassetid://117451341682452")
+end,
+})
+
+local BluedixeButton = FunTab:CreateButton({
+   Name = "Bludude's animation pack",
+   Callback = function()
+   setupAnimations("rbxassetid://91690853303054", "rbxassetid://18885906143", "rbxassetid://96571077893813")
+end,
+})
+
+local JeffButton = FunTab:CreateButton({
+   Name = "Jeff the killer animation pack",
+   Callback = function()
+   local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+local walkAnimationId = "rbxassetid://252557606" -- Replace with your walking animation ID
+local walkAnimation = Instance.new("Animation")
+walkAnimation.AnimationId = walkAnimationId
+local walkAnimationTrack
+
+local idleAnimationId = "rbxassetid://124622205682529" -- Replace with your idle animation ID
+local idleAnimation = Instance.new("Animation")
+idleAnimation.AnimationId = idleAnimationId
+local idleAnimationTrack
+
+humanoid.Running:Connect(function(speed)
+    if speed > 0 then
+        if idleAnimationTrack and idleAnimationTrack.IsPlaying then
+            idleAnimationTrack:Stop()
+        end
+        if not walkAnimationTrack or not walkAnimationTrack.IsPlaying then
+            walkAnimationTrack = humanoid:LoadAnimation(walkAnimation)
+            walkAnimationTrack.Looped = true
+            walkAnimationTrack:Play()
+        end
+    else
+        if walkAnimationTrack and walkAnimationTrack.IsPlaying then
+            walkAnimationTrack:Stop()
+        end
+        if not idleAnimationTrack or not idleAnimationTrack.IsPlaying then
+            idleAnimationTrack = humanoid:LoadAnimation(idleAnimation)
+            idleAnimationTrack.Looped = true
+            idleAnimationTrack:Play()
+        end
+    end
+end)
+end,
+})
+
+local Funivider = FunTab:CreateDivider()
+
+local Funaragraph = FunTab:CreateParagraph({Title = "Note:", Content = "yes, The emotes are Fe."})
+
+local EmoteToggle = FunTab:CreateToggle({
+   Name = "Emote Gui",
+   CurrentValue = false,
+   Flag = "ToggleEmoteGui",
+   Callback = function(Value)
+      if Value then
+         -- Create the ScreenGui and add it to the PlayerGui
+         local screenGui = Instance.new("ScreenGui")
+         screenGui.Name = "ButtonGui"
+         screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+         -- Create the main frame which holds the scrolling frame
+         local mainFrame = Instance.new("Frame")
+         mainFrame.Name = "MainFrame"
+         mainFrame.Size = UDim2.new(0, 400, 0, 300)
+         mainFrame.Position = UDim2.new(0.5, -200, 0.5, -150)
+         mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+         mainFrame.BorderSizePixel = 0
+         mainFrame.Parent = screenGui
+
+         -- Drag functionality for the main frame
+         local function makeFrameDraggable(frame)
+             local dragToggle = false
+             local dragInput = nil
+             local dragStart = nil
+             local startPos = nil
+
+             local function updateInput(input)
+                 local delta = input.Position - dragStart
+                 frame.Position = UDim2.new(
+                     startPos.X.Scale, 
+                     startPos.X.Offset + delta.X, 
+                     startPos.Y.Scale, 
+                     startPos.Y.Offset + delta.Y
+                 )
+             end
+
+             frame.InputBegan:Connect(function(input)
+                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                     dragToggle = true
+                     dragStart = input.Position
+                     startPos = frame.Position
+                     input.Changed:Connect(function()
+                         if input.UserInputState == Enum.UserInputState.End then
+                             dragToggle = false
+                         end
+                     end)
+                 end
+             end)
+
+             frame.InputChanged:Connect(function(input)
+                 if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+                     dragInput = input
+                 end
+             end)
+
+             game:GetService("UserInputService").InputChanged:Connect(function(input)
+                 if dragToggle and input == dragInput then
+                     updateInput(input)
+                 end
+             end)
+         end
+
+         makeFrameDraggable(mainFrame)
+
+         -- Create the scrolling frame inside the main frame
+         local scrollFrame = Instance.new("ScrollingFrame")
+         scrollFrame.Name = "ScrollFrame"
+         scrollFrame.Size = UDim2.new(1, -10, 1, -10)
+         scrollFrame.Position = UDim2.new(0, 5, 0, 5)
+         scrollFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+         scrollFrame.BorderSizePixel = 0
+         scrollFrame.CanvasSize = UDim2.new(0, 380, 0, 42 * 35)
+         scrollFrame.Parent = mainFrame
+
+         local uiListLayout = Instance.new("UIListLayout")
+         uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+         uiListLayout.Padding = UDim.new(0, 5)
+         uiListLayout.Parent = scrollFrame
+
+         -- Function to create and configure buttons
+         local function Play(Number, Name)
+             local button = Instance.new("TextButton")
+             button.Size = UDim2.new(0, 380, 0, 30)
+             button.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+             button.BorderSizePixel = 0
+             button.Text = Name
+             button.Font = Enum.Font.SourceSansBold
+             button.TextScaled = true
+             button.TextColor3 = Color3.fromRGB(255, 255, 255)
+             button.AutoButtonColor = false
+
+             local uiCorner = Instance.new("UICorner")
+             uiCorner.CornerRadius = UDim.new(0, 8)
+             uiCorner.Parent = button
+
+             button.MouseEnter:Connect(function()
+                 button.BackgroundColor3 = Color3.fromRGB(90, 90, 90)
+             end)
+             button.MouseLeave:Connect(function()
+                 button.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+             end)
+
+             local animationTrack
+
+             button.MouseButton1Click:Connect(function()
+                 local Players = game:GetService("Players")
+                 local player = Players.LocalPlayer
+                 local character = player.Character or player.CharacterAdded:Wait()
+                 local humanoid = character:WaitForChild("Humanoid")
+
+                 if not animationTrack then
+                     local animation = Instance.new("Animation")
+                     animation.AnimationId = "rbxassetid://" .. Number
+
+                     animationTrack = humanoid:LoadAnimation(animation)
+                     animationTrack:Play()
+                 else
+                     if animationTrack.IsPlaying then
+                         animationTrack:Stop()
+                     end
+                     animationTrack = nil
+                 end
+             end)
+
+             return button
+         end
+
+         -- Add buttons with animation IDs and names
+Play(138019937280193, "Gambling dance idk").Parent = scrollFrame
+Play(87482480949358, "Subterfuge").Parent = scrollFrame
+Play(107464355830477, "SillyBilly").Parent = scrollFrame
+Play(100986631322204, "MissTheQuite").Parent = scrollFrame
+Play(80918082366233, "Aol guy").Parent = scrollFrame
+Play(138857297031173, "AshleyLookatMe").Parent = scrollFrame
+Play(117853129871362, "BagUp").Parent = scrollFrame
+Play(75802192289302, "BrickBattler").Parent = scrollFrame
+Play(79878932144855, "Knightly Shimmy").Parent = scrollFrame
+Play(121768360244671, "CaliforniaGirls").Parent = scrollFrame
+Play(85856303945173, "Dio").Parent = scrollFrame
+Play(98261071866527, "DistractionDance").Parent = scrollFrame
+Play(124289084579824, "Drumsticks").Parent = scrollFrame
+Play(93910549909381, "Eggrolled").Parent = scrollFrame
+Play(134617723143543, "Gangnam").Parent = scrollFrame
+Play(93821902607346, "Griddy").Parent = scrollFrame
+Play(138019937280193, "HakariDance").Parent = scrollFrame
+Play(103719006556178, "Headbanger").Parent = scrollFrame
+Play(133160365635320, "The Hero").Parent = scrollFrame
+Play(81512503280172, "HeyNow").Parent = scrollFrame
+Play(70533211127594, "Hotdog").Parent = scrollFrame
+Play(75420633536507, "Insanity").Parent = scrollFrame
+Play(139769270640106, "JumpingForJoy").Parent = scrollFrame
+Play(76148053209080, "Jumpstyle").Parent = scrollFrame
+Play(83225211078144, "KazotskyKick").Parent = scrollFrame
+Play(105276039560672, "Khaled").Parent = scrollFrame
+Play(104894697830131, "Konton").Parent = scrollFrame
+Play(89926565466406, "CompanyGroove").Parent = scrollFrame
+Play(111309618966926, "MonsterMash").Parent = scrollFrame
+Play(114582100709529, "No").Parent = scrollFrame
+Play(91362496118165, "PYT").Parent = scrollFrame
+Play(83463199855585, "Poisoned").Parent = scrollFrame
+Play(128012749953319, "Prince").Parent = scrollFrame
+Play(74238051754912, "Shucks").Parent = scrollFrame
+Play(107716765704359, "Silly").Parent = scrollFrame
+Play(71083881571066, "Skeleton").Parent = scrollFrame
+Play(90399490625732, "SoRetro").Parent = scrollFrame
+Play(133140863961315, "StockDance").Parent = scrollFrame
+Play(75193609204744, "SubjectThree").Parent = scrollFrame
+Play(112276030300130, "Sukuna").Parent = scrollFrame
+Play(112887456905366, "PickUpThePhone").Parent = scrollFrame
+Play(118204083671442, "TickTock").Parent = scrollFrame
+Play(132144576305869, "Two2Two").Parent = scrollFrame
+Play(119813505721636, "Wait").Parent = scrollFrame
+Play(128777973, "Wave").Parent = scrollFrame
+Play(100986631322204, "MissTheQuite").Parent = scrollFrame
+Play(107464355830477, "SillyBilly").Parent = scrollFrame
+Play(87482480949358, "Subterfuge").Parent = scrollFrame
+
+      else
+         -- Remove the GUI
+         local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+         local buttonGui = playerGui:FindFirstChild("ButtonGui")
+         if buttonGui then
+             buttonGui:Destroy()
+         end
+      end
+   end,
+})
+
+local CreditsParagraph = cTab:CreateParagraph({Title = "Note:", Content = "If you have any suggestions or to report smh, Please Suggest it on our discord."})
+
+local CreditsLabel1 = cTab:CreateLabel("hiiamcool0066_17937: a special guy(helped through alot)", 81011198561140, Color3.fromRGB(90, 90, 90), false)
+
+local CreditsLabel2 = cTab:CreateLabel("Creator: Bob.47", 70727208556993, Color3.fromRGB(90, 90, 90), false)
+
+local CreditsLabel3 = cTab:CreateLabel("doitenroi_9941: helped me through setting up the discord server", 111385007873003, Color3.fromRGB(90, 90, 90), false)
+
+
+
+local UnloadButton = SetTab:CreateButton({
+   Name = "Unload the Gui ",
+   Callback = function()
+   Rayfield:Destroy()
+local gui = game.Players.LocalPlayer.PlayerGui:FindFirstChild("EmoteGui")
+if gui then
+    gui:Destroy()
+end
+local gui2 = game.Players.LocalPlayer.PlayerGui:FindFirstChild("BobbyScreengui")
+if gui2 then
+    gui2:Destroy()
+end
+   end,
+})
+ 
+ local SettingsSection = SetTab:CreateSection("Themes")
+  
+local IaiaButton = SetTab:CreateButton({
+   Name = "Set Default theme",
+   Callback = function()
+   Window.ModifyTheme("Default")
+   end,
+})
+
+local ambButton = SetTab:CreateButton({
+   Name = "Set AmberGlow theme",
+   Callback = function()
+   Window.ModifyTheme("AmberGlow")
+   end,
+})
+end
+
+BobIsCool()
